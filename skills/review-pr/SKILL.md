@@ -251,25 +251,41 @@ As the orchestrator, produce the final report directly from the Change Scope res
 
 State that the labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize merge, rejection, or author requests.
 
-Present one consolidated table with exactly these columns:
+### Summary
 
-| Category | Subcategory | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|---|
+Show the summary before any criterion evaluation tables. Include counts for all five labels, including zero counts:
+
+| Label | Count |
+|---|---|
+| Please Fix | 0 |
+| Need Review | 0 |
+| Unable to Verify | 0 |
+| Nit | 0 |
+| LGTM | 0 |
+
+Calculate and show `Overall` immediately below the Summary table using this priority: `Please Fix`, `Need Review`, `Unable to Verify`, `Nit`, then `LGTM`.
+
+### Criterion evaluation tables
+
+Group the criterion results by `rubric.category`. Render each category as its own heading outside the table, for example `### Reliability` or `### Security`. Do not repeat the top-level category value inside the table.
+
+Under each category heading, present a table with exactly these columns:
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
 
 Populate the columns as follows:
 
-- `Category`: `rubric.category`
-- `Subcategory`: `rubric.subcategory`
-- `Review Criterion`: the concrete PR-specific `rubric.question`; do not combine Category or Subcategory into this field
+- Category heading: `rubric.category`
+- `Category`: `rubric.subcategory`
+- `Review Criterion`: the concrete PR-specific `rubric.question`
 - `Checks`: concise list of verification activities actually performed for the criterion
 - `Evidence`: concise concrete observations, code/source locations, command outcomes, or missing-information details
 - `Result`: one of `Nit`, `LGTM`, `Please Fix`, `Need Review`, or `Unable to Verify`
 
-Include exactly one row per review-plan criterion. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
+Include exactly one row per review-plan criterion under its category heading. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
 
 When several checks or evidence entries apply to one criterion, separate them with `<br>` or semicolons while keeping the table readable.
-
-After the table, show counts for all five labels, including zero counts, and calculate the overall label using this priority: `Please Fix`, `Need Review`, `Unable to Verify`, `Nit`, then `LGTM`.
 
 Preserve concrete evidence and missing-information details, but do not expose intermediate Artifact data, internal role routing, rejected candidates, or private reasoning.
 
