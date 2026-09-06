@@ -18,7 +18,7 @@ Perform specification-driven contextual review only for items whose `primary_rol
 
 The delegated task includes a target-local unique batch ID. Each invocation receives at most five related review-plan items; prefer three to five when that many apply, and allow smaller batches without inventing concerns. The orchestrator partitions larger assignments before delegation. The concern list below is a selection guide, not a requirement to evaluate every concern.
 
-The delegated task must provide the review target, changed files, complete diff, collected context, and the review-plan items assigned to this agent. If required input is missing, do not retrieve substitutes or guess; use `assessment.evaluation.level: not_assessable` for the affected items.
+The delegated task must provide the review target, changed files, complete diff, collected context, and the review-plan items assigned to this agent. Every assigned item must include its stable `criterion_id`. If required input is missing, do not retrieve substitutes or guess; use `assessment.evaluation.level: not_assessable` for the affected items.
 
 ## Context to use
 
@@ -51,7 +51,7 @@ Do not independently access external sources or explore references absent from t
 ## Completion criteria
 
 - Return exactly one result for every assigned review-plan item.
-- Preserve each assigned review-plan `id` in the corresponding result.
+- Preserve each assigned review-plan `criterion_id` in the corresponding result.
 - Preserve requirement IDs, acceptance-criterion IDs, and precise source locations.
 - Evaluate every result against the common evaluation scale (four conformance levels plus `not_assessable`) in `REVIEW.md`.
 - Every result records one or more performed checks unless the item is `not_assessable` before a meaningful check can be performed.
@@ -105,7 +105,7 @@ Return exactly one Artifact using the following structure:
       "data": {
         "result": [
           {
-            "id": "001",
+            "criterion_id": "001",
             "rubric": {
               "category": "Functional suitability",
               "subcategory": "Functional completeness",
