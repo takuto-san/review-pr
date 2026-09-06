@@ -30,6 +30,36 @@ The orchestrator passes required inputs in these Artifact envelopes, and each
 receiver reads the typed payload from `parts[0].data`. No stage may infer
 missing payload fields from conversation history.
 
+## Criterion-centric review model
+
+The review plan is the source of truth for the final report. Every selected
+review-plan item represents one concrete review criterion for the current
+change. Mechanical, structural, and contextual work provide checks and evidence
+for those criteria; they are evidence sources, not separate final-report rows.
+
+Each review-plan item must preserve:
+
+- `id` — stable review-item identifier
+- `rubric.category` — quality characteristic
+- `rubric.subcategory` — quality subcharacteristic
+- `rubric.criterion` — source criterion selected from `REVIEW.md`
+- `rubric.question` — concrete PR-specific review criterion/question
+- primary and supporting review roles
+- expected checks and evidence when known
+
+Reviewer outputs must keep `checks` separate from `evidence`:
+
+- `checks` describe what verification was actually performed, such as `Unit tests`, `Static analysis`, `Execution path trace`, or `Requirement trace`.
+- `evidence` records the concrete observation produced by those checks, including command output, source locations, or code locations.
+
+Do not use `mechanical`, `structural`, or `contextual` as user-facing check names.
+Those values may remain in Artifact metadata for orchestration and traceability.
+
+Mechanical results may support, contradict, or be inconclusive for one or more
+review-plan items. Every such association must reference the stable review-item
+`id`. A passing command must not be treated as evidence for an unrelated
+criterion merely because both concern the same file or quality category.
+
 ## ID rules
 
 The orchestrator assigns IDs and passes them explicitly to reviewers. Generated
@@ -41,8 +71,8 @@ not global identifiers.
 | Field | Meaning | Numbering scope |
 |---|---|---|
 | `metadata.targetId` | The PR or local change set being reviewed | Unique within the run; map it to the repository, PR when applicable, base/head SHAs, and diff in the shared target context |
-| Result `id` | One review-plan item | Unique within the target across all layers and batches |
-| `metadata.batchId` | A group of at most five items delegated together | Unique within the target across structural and contextual layers |
+| Result `id` / `review_item_id` | One review-plan item | Unique within the target across all roles and batches |
+| `metadata.batchId` | A group of at most five items delegated together | Unique within the target across structural and contextual roles |
 | `artifactId` | One output Artifact | Unique across all stages and targets in the run, including consolidated outputs |
 
 Each numbering scope starts at `"001"` independently. A repeated value in
@@ -61,6 +91,9 @@ preserved.
 - Every reviewer result uses the shared A2A-compatible Artifact envelope.
 - Every reviewer receives its required inputs explicitly.
 - Each structural and contextual result contains exactly one result per assigned item.
+- Structural and contextual results keep performed `checks` separate from concrete `evidence`.
+- Every mechanical criterion association references an existing review-plan item ID and records its check, relation, and evidence.
 - Missing evidence uses `assessment.evaluation.level: not_assessable` instead of omission.
-- Every executed verification command and result is recorded.
+- Every executed verification command and result is recorded, including commands that cannot be mapped to a review criterion.
+- Final consolidation produces one user-facing result per review-plan item, not one result per review role.
 - The orchestrator does not treat an incomplete review as complete.
