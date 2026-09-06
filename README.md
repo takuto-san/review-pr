@@ -67,7 +67,8 @@ review-pr/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── assets/
-│   └── review-pr-icon.png
+│   ├── review-pr-icon.png
+│   └── review-workflow.svg
 ├── agents/
 │   └── review/
 │       ├── mechanical.md
@@ -89,29 +90,7 @@ review-pr/
 
 ### Review Workflow
 
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}} }%%
-flowchart TD
-    A[Load PR or local changes] --> B{Should the review run?}
-    B -->|No| X[Explain why the review was skipped]
-    B -->|Yes| C[Collect change intent and supporting context]
-    B -->|Yes| E{Can automated checks run?}
-    E -->|Yes| M[Run eligible tests and static checks]
-    E -->|No| U[Record work that could not run]
-    C --> P[Assess scope and build the review plan]
-    P --> L{Can each planned review run?}
-    L --> S[Review code behavior and design]
-    L --> T[Compare the implementation with requirements]
-    L -->|Unavailable| U
-    M --> J[""]
-    S --> J
-    T --> J
-    U --> J
-    J --> V[Combine results and check fix candidates]
-    V --> R[Present the final review report]
-    classDef merge fill:transparent,stroke:transparent,color:transparent
-    class J merge
-```
+![Review PR workflow](assets/review-workflow.svg)
 
 ## 4. Use the Skill
 
