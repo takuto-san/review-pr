@@ -103,11 +103,14 @@ flowchart TD
     L --> S[Review code behavior and design]
     L --> T[Compare the implementation with requirements]
     L -->|Unavailable| U
-    M --> V[Combine results and check fix candidates]
-    S --> V
-    T --> V
-    U --> V
+    M --> J[""]
+    S --> J
+    T --> J
+    U --> J
+    J --> V[Combine results and check fix candidates]
     V --> R[Present the final review report]
+    classDef merge fill:transparent,stroke:transparent,color:transparent
+    class J merge
 ```
 
 ## 4. Use the Skill
