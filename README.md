@@ -222,11 +222,7 @@ The review is read-only by default. It does not modify source files, install dep
 ### Review Report Format
 
 ```text
-| Category | Subcategory | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|---|
-| Reliability | Recoverability | Can retry after notification failure duplicate payment? | Unit tests; Execution path trace | Retry tests passed; idempotency key is reused across retries. | LGTM |
-| Security | Authorization | Can an unauthorized user update another user's resource? | Authorization path review | Ownership validation is missing at `src/auth.ts:42`. | Please Fix |
-| Functional suitability | Functional completeness | Does the export satisfy every supplied acceptance criterion? | Acceptance-criterion mapping; Unit tests | AC-1 is covered; conflicting date-format requirements prevent AC-2 verification. | Unable to Verify |
+## Summary
 
 | Label | Count |
 |---|---|
@@ -238,8 +234,28 @@ The review is read-only by default. It does not modify source files, install dep
 
 Overall: Please Fix
 
+### Reliability
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
+| Recoverability | Can retry after notification failure duplicate payment? | Unit tests; Execution path trace | Retry tests passed; idempotency key is reused across retries. | LGTM |
+
+### Security
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
+| Authorization | Can an unauthorized user update another user's resource? | Authorization path review | Ownership validation is missing at `src/auth.ts:42`. | Please Fix |
+
+### Functional suitability
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
+| Functional completeness | Does the export satisfy every supplied acceptance criterion? | Acceptance-criterion mapping; Unit tests | AC-1 is covered; conflicting date-format requirements prevent AC-2 verification. | Unable to Verify |
+
 Advisory triage candidates for human review; not automatic merge gates or author requests.
 ```
+
+The top-level quality characteristic is shown as a section heading. Inside each table, the `Category` column contains the corresponding subcategory from the internal rubric.
 
 #### False Positives Filtered
 
@@ -339,7 +355,7 @@ Agent responsibilities and output contracts are defined under `agents/`:
 
 Keep orchestration and final-report rules in `skills/review-pr/SKILL.md`.
 
-Give every review-plan item a stable `id` such as `001` and preserve it through evidence collection and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned item.
+Give every review-plan criterion a stable `criterion_id` such as `001` and preserve it through evidence collection and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned criterion.
 
 ## 7. Technical Details
 
@@ -381,6 +397,6 @@ Licensed under the [MIT License](LICENSE).
 
 ## Review evaluation and batching
 
-Structural and contextual work is split into batches of at most five related items per invocation (prefer three to five; smaller batches are valid). The orchestrator assigns unique batch Artifact IDs and consolidates results with exactly one final result per review-plan item. Internal evidence collection can therefore require more than three agent invocations without changing the user-facing report structure.
+Structural and contextual work is split into batches of at most five related criteria per invocation (prefer three to five; smaller batches are valid). The orchestrator assigns unique batch Artifact IDs and consolidates results with exactly one final result per review-plan criterion. Internal evidence collection can therefore require more than three agent invocations without changing the user-facing report structure.
 
 Conformance has four levels plus a separate `not_assessable` state. The orchestrator maps evaluations to the five workflow labels in `REVIEW.md` and checks the evidence of every `Please Fix` candidate. Labels and suggested fixes support human triage; they do not automatically authorize author requests or merge decisions.
