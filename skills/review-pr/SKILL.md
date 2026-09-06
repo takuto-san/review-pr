@@ -205,7 +205,7 @@ The mechanical reviewer must run the repository commands classified as runnable 
 
 Do not install dependencies, add tools, change configuration, or execute destructive commands. For an external or otherwise untrusted pull request, do not execute repository-controlled code without explicit user approval. Record an A2A task failure when required verification cannot be started.
 
-The mechanical Artifact uses `name: review.mechanical`. Its payload contains a `result` array with only commands that were actually executed. Each entry records its name, command, `status`, observed summary, and zero or more `criterion_support` entries. Each `criterion_support` entry references a review-plan item ID and records the actual check, relation (`supports`, `contradicts`, or `inconclusive`), and observed evidence.
+The mechanical Artifact uses `name: review.mechanical`. Its payload contains a `result` array with only commands that were actually executed. Each entry records its name, command, `status`, observed summary, and zero or more `criterion_support` entries. Each `criterion_support` entry references a review-plan item through `criterion_id` and records the actual check, `assessment` (`supports`, `contradicts`, or `inconclusive`), and observed evidence.
 
 Executed commands that do not materially verify a selected review criterion must still be retained in the Artifact for coverage accounting, but they must not create standalone rows in the final report.
 
@@ -232,7 +232,7 @@ For each item:
 
 Do not expose internal role names as user-facing checks. For example, use `Unit tests`, `Static analysis`, `Execution path trace`, `Authorization path review`, `Requirement trace`, or `Acceptance-criterion mapping` rather than `Mechanical`, `Structural`, or `Contextual`.
 
-Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every mechanical `review_item_id` must reference an existing review-plan item. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
+Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every mechanical `criterion_id` must reference an existing review-plan item. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
 
 Use these labels:
 
