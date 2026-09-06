@@ -2,7 +2,7 @@ The orchestrator executes this check directly; do not delegate an agent.
 
 ## Mission
 
-Analyze Change Scope for the PR agent. Do not review code correctness or decide whether review is needed. Determine whether the amount and grouping of substantive change impose excessive cognitive load on a human reviewer. Do not modify files.
+Analyze Change Scope for the PR agent using the Google Small CLs principles. Do not review code correctness or decide whether review is needed. Determine whether the change is a minimal, self-contained unit and whether the amount and grouping of substantive change impose excessive cognitive load on a human reviewer. Do not modify files.
 
 ## Input
 
@@ -16,23 +16,35 @@ If the target or diff statistics cannot be established, do not guess. Record the
 2. Separate generated files, lockfiles, and simple moves or deletions from substantive review work.
 3. Group changes into logical Change Groups that share one purpose.
 4. Identify mixtures of features, bug fixes, refactoring, tests, configuration, or migrations.
-5. Apply Google Small CLs principles: judge whether this is one self-contained change, not merely whether its line count is small.
+5. Determine whether the PR addresses one purpose with the smallest practical self-contained change, rather than including an entire feature unnecessarily.
+6. Check whether related tests and enough usage context are present to make the change understandable. In particular, note an API addition with no representative usage. Treat missing behavioral coverage as input to the later review plan rather than deciding code correctness here.
+7. Identify safe split points. Allow both independently mergeable groups and groups that can be submitted in an explicit dependency order, provided every submitted step leaves the repository in a valid state.
+8. Apply Google Small CLs principles conceptually: use line and file counts as evidence of reviewer workload, never as hard thresholds. Account for cases such as deletions and trusted mechanical refactoring that are large in raw size but cheap to review.
 
-This validation is only about reviewer workload. Closed, draft, trivial, and
-already-reviewed pull requests are handled by `eligibility` before scope analysis runs.
+This validation is only about reviewer workload. It is advisory and never
+blocks or skips the review. Closed, draft, trivial, and already-reviewed pull
+requests are handled by `eligibility` before scope analysis runs.
 
 ## Classification
 
-- `focused`: The substantive change is cohesive and its reviewer workload is manageable.
-- `split_recommended`: Multiple independently mergeable Change Groups create avoidable reviewer workload.
-- `review_blocked`: The substantive change is too large or entangled for a reliable review in one pass, and no safe split can be identified from the available evidence.
+- `ok`: The PR is one minimal, self-contained, understandable change with manageable reviewer workload.
+- `warning`: The PR is not sufficiently minimal, self-contained, understandable, or manageable for a fully reliable review in one pass. This is advisory and does not block review.
 
-Do not classify a change as `review_blocked` from raw line count alone. Account for generated content, mechanical edits, reliable bulk refactoring, conceptual complexity, and the number of execution paths a reviewer must hold in mind.
+Do not classify a change as `warning` from raw line count alone. Account for generated content, mechanical edits, reliable bulk refactoring, conceptual complexity, and the number of execution paths a reviewer must hold in mind.
+
+The warning status does not change review eligibility, suppress a review layer,
+or map to a workflow finding label. Continue the review with available evidence
+and report any reduced confidence, missing context, or unreviewed areas. When a
+safe split is identifiable, describe it in `suggestion`; otherwise leave that
+field empty.
 
 ## Completion criteria
 
 - Account for every changed file in either a Change Group or an explicitly identified non-substantive category.
-- Base the classification on cohesion and reviewer workload, not raw size alone.
+- Base the classification on minimality, self-containment, cohesion, understandability, and reviewer workload, not raw size alone.
+- For `warning`, explain the concrete reason and, when possible, state whether the suggested split is independent or give the safe submission order.
+- Continue all applicable review work regardless of the scope classification.
+- Present `warning` as advisory, not as a blocker or finding.
 - Do not emit code-quality findings or review-eligibility decisions.
 - Record material uncertainty explicitly.
 
@@ -44,7 +56,7 @@ Return exactly one A2A-compatible Artifact using `name: review.scope` and
 
 ```json
 {
-  "scope_status": "focused | split_recommended | review_blocked",
+  "status": "ok | warning",
   "stats": {
     "changed_files": 0,
     "additions": 0,
@@ -60,7 +72,8 @@ Return exactly one A2A-compatible Artifact using `name: review.scope` and
       "deletions": 0
     }
   ],
-  "split_reason": "Only when splitting is recommended or review is blocked",
+  "reason": "Required when status is warning",
+  "suggestion": "Safe split and submission order when identifiable; otherwise empty",
   "uncertainties": [
 
   ]

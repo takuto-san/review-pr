@@ -212,14 +212,20 @@ belong to the subsequent review-plan stage.
 As part of planning, the orchestrator analyzes scope directly using the
 procedure and payload contract in `skills/review-pr/checks/scope.md`. Do not
 delegate a scope agent. Reuse collected metadata and diff statistics, group
-substantive changes by purpose, account for all files, and assess cohesion and
-reviewer workload. Produce `review.scope` before `review.plan`, preserving
-uncertainties and the existing scope classifications. Scope analysis does not
-produce code-quality findings or change eligibility.
+substantive changes by purpose, account for all files, and assess minimality,
+self-containment, cohesion, understandability, and reviewer workload. Safe
+splits may be independent or submitted in an explicit dependency order that
+keeps every intermediate state valid. Produce `review.scope` before
+`review.plan`, preserving uncertainties and the existing scope
+classifications. Scope analysis does not produce code-quality findings or
+change eligibility; missing behavioral coverage discovered during scope
+analysis is carried into review planning.
 
-If the result is `review_blocked`, continue only with checks that can still
-produce reliable evidence. The final report must state that the review is
-incomplete.
+`warning` is advisory. It never stops the workflow, makes an agent ineligible,
+suppresses an applicable review item, or maps to a workflow finding label.
+Continue all applicable review layers and state the warning reason, any safe
+split suggestion, concrete confidence limitations, missing context, and
+unreviewed areas in the final report.
 
 ## 5. Build the review plan
 

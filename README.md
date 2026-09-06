@@ -271,6 +271,15 @@ The default coverage model considers these ISO/IEC 25010 quality characteristics
 
 Only criteria applicable to the current change are selected.
 
+Change Scope follows the conceptual guidance in
+[Google's Small CLs](https://google.github.io/eng-practices/review/developer/small-cls.html):
+prefer one minimal, self-contained change; include related tests and enough
+usage context to understand it; judge size by reviewer workload rather than a
+hard line-count limit; and permit safe splitting into independent or explicitly
+ordered changes that keep each submitted state valid. Scope concerns are
+reported using the simple `ok` or `warning` status; warnings may include a
+safe split suggestion but do not block or skip the code review.
+
 ### Customizing agents
 
 Agent responsibilities and output contracts are defined under `agents/`:

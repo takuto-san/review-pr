@@ -51,16 +51,23 @@ Before reviewing code, determine whether the PR is one self-contained change.
 
 | Concern | Apply when | Verify |
 |---|---|---|
-| Change size | Every PR | Whether file count, additions, deletions, and substantive changed lines are reviewable |
+| Change minimality | Every PR | Whether the PR makes the smallest practical, self-contained change that addresses one purpose rather than an entire feature unnecessarily |
+| Change size | Every PR | Whether file count, additions, deletions, substantive changed lines, conceptual complexity, and reviewer workload are manageable; do not use a hard line-count threshold |
 | Change cohesion | Multiple features or directories change | Whether all changes serve one purpose |
-| Change separation | Features, refactoring, and configuration are mixed | Whether independently mergeable changes should be split |
+| Change separation | Features, bug fixes, refactoring, tests, configuration, or migrations are mixed | Whether separable changes should be split into independent or explicitly ordered PRs that each leave the repository in a valid state |
 | Review context | Intent is unclear from the diff | Whether the PR, Issue, tests, and existing code explain the reason for change |
+| Self-contained evidence | Logic, APIs, or behavior change | Whether related tests and enough usage context are included for reviewers to understand the change; an API-only change may need a representative usage |
 
 Classify scope as:
 
-- `Focused`: one self-contained change
-- `Split recommended`: multiple independent changes can reasonably be separated
-- `Review blocked`: scope or missing context prevents a trustworthy review
+- `OK`: one minimal, self-contained, understandable change with manageable reviewer workload
+- `Warning`: a non-blocking warning that the change is not sufficiently minimal, self-contained, understandable, or manageable for a fully reliable review in one pass
+
+When the result is `Warning`, explain the reason and suggest a safe split when
+one can be identified. Scope classifications are advisory and never stop the
+review. Continue every applicable review layer for the available evidence.
+Report reduced confidence, unreviewed areas, or missing context explicitly, but
+do not use a scope result as review eligibility or as a workflow finding label.
 
 # Functional suitability
 
