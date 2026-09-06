@@ -7,9 +7,8 @@
     {
       "name": "review-pr",
       "source": {
-        "source": "git",
-        "url": "takuto-san/review-pr",
-        "ref": "main"
+        "source": "local",
+        "path": "./plugins/review-pr"
       },
       "policy": {
         "installation": "AVAILABLE",
