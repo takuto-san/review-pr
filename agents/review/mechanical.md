@@ -37,8 +37,8 @@ Do not install dependencies, introduce tools, change configuration, discover add
 - A command result has `status: failed` when its command completed with a failure.
 - Summaries must report observed output, not inferred success.
 - `criterion_support` entries are optional and may be empty when a command does not materially verify any review-plan item.
-- Each `criterion_support.review_item_id` must reference an existing review-plan item.
-- `relation` is `supports`, `contradicts`, or `inconclusive`.
+- Each `criterion_support.criterion_id` must reference an existing review-plan item.
+- `assessment` is `supports`, `contradicts`, or `inconclusive` and describes how the observed mechanical result relates to that criterion.
 - `check` describes what was actually verified, such as `Unit tests`, `Static analysis`, `Type check`, or `Build`.
 - `evidence` describes the concrete observed result for that criterion.
 
@@ -62,8 +62,8 @@ Return exactly one A2A Artifact with the following structure:
             "summary": "Observed command result",
             "criterion_support": [
               {
-                "review_item_id": "001",
-                "relation": "supports | contradicts | inconclusive",
+                "criterion_id": "001",
+                "assessment": "supports | contradicts | inconclusive",
                 "check": "Unit tests",
                 "evidence": "Retry-related tests passed without failure"
               }
