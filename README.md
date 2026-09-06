@@ -14,12 +14,11 @@ depend on any single agent.
 - [3. Architecture](#3-architecture)
   - [Directory Structure](#directory-structure)
   - [Review Workflow](#review-workflow)
-- [4. Use the Skill](#4-use-the-skill)
-- [5. Install or Develop](#5-install-or-develop)
-- [6. Usage Guidance](#6-usage-guidance)
-- [7. Configuration](#7-configuration)
-- [8. Technical Details](#8-technical-details)
-- [9. Project Information](#9-project-information)
+- [4. How to Use](#4-how-to-use)
+- [5. Usage Guidance](#5-usage-guidance)
+- [6. Configuration](#6-configuration)
+- [7. Technical Details](#7-technical-details)
+- [8. Project Information](#8-project-information)
 
 ## 1. Overview
 
@@ -92,25 +91,43 @@ review-pr/
 
 ![Review PR workflow](assets/review-workflow.svg)
 
-## 4. Use the Skill
+## 4. How to Use
 
-Performs an evidence-based review of local changes or a GitHub pull request.
+### Codex
 
-What it does:
+#### Step 1: Install the plugin
 
-1. Resolves local changes or the requested pull request.
-2. In Reviewer mode, checks whether review is needed and skips closed, draft, trivial, or already-reviewed pull requests.
-3. Checks whether mechanical commands can run, then starts only runnable checks while collecting context.
-4. Evaluates whether the change creates excessive reviewer workload.
-5. Builds a review plan from the change and `REVIEW.md`.
-6. Checks the inputs and assigned work for structural and contextual review, then runs only eligible agents in parallel while mechanical checks continue:
-   - Mechanical checks run tests, static analysis, and other objective checks.
-   - Structural review examines design, execution paths, state, security, performance, and maintainability.
-   - Contextual review compares the implementation with requirements, intent, compatibility expectations, and documentation.
-7. Consolidates the results and checks the evidence of `Please Fix` candidates.
-8. Reports findings, human decisions, and explicit limitations.
+Install the `review-pr` plugin using the supported Codex plugin mechanism.
 
-Use a natural-language request in any supported agent:
+For local development, validate the package with:
+
+```bash
+python3 /path/to/plugin-creator/scripts/validate_plugin.py /path/to/review-pr
+```
+
+#### Step 2: Open the target repository
+
+Start Codex in the repository you want to review.
+
+To review a GitHub pull request, make sure GitHub CLI (`gh`) is installed and authenticated.
+
+#### Step 3: Run the review
+
+Review local changes:
+
+```text
+$review-pr
+```
+
+Review a GitHub pull request:
+
+```text
+$review-pr 123
+```
+
+Replace `123` with the pull-request number.
+
+You can also use a natural-language request:
 
 ```text
 Review my local changes
@@ -118,16 +135,76 @@ Review PR 123
 Review this PR: https://github.com/owner/repository/pull/123
 ```
 
-Codex and Claude Code also expose native invocations:
+#### Step 4: Check the result
 
-| Platform | Local changes | Pull request |
-|---|---|---|
-| Codex | `$review-pr` | `$review-pr 123` |
-| Claude Code | `/review-pr` | `/review-pr 123` |
+The plugin runs mechanical, structural, and contextual review and returns a consolidated report.
 
-A pull request URL is accepted in a natural-language request. In platforms
-that support direct skill arguments, pass only a numeric pull-request number as
-the argument.
+If the report contains `Please Fix` findings, update the implementation and run `$review-pr` again.
+
+### Claude Code
+
+#### Step 1: Install or load the plugin
+
+Load the plugin from the local repository:
+
+```bash
+claude --plugin-dir /path/to/review-pr
+```
+
+Validate the plugin if needed:
+
+```bash
+claude plugin validate /path/to/review-pr --strict
+```
+
+#### Step 2: Open the target repository
+
+Start Claude Code in the repository you want to review.
+
+To review a GitHub pull request, make sure GitHub CLI (`gh`) is installed and authenticated.
+
+#### Step 3: Run the review
+
+Review local changes:
+
+```text
+/review-pr
+```
+
+Review a GitHub pull request:
+
+```text
+/review-pr 123
+```
+
+Replace `123` with the pull-request number.
+
+You can also use a natural-language request:
+
+```text
+Review my local changes
+Review PR 123
+Review this PR: https://github.com/owner/repository/pull/123
+```
+
+#### Step 4: Check the result
+
+The plugin runs mechanical, structural, and contextual review and returns a consolidated report.
+
+If the report contains `Please Fix` findings, update the implementation and run `/review-pr` again.
+
+### Requirements
+
+The following environment and access are required to run the review:
+
+- A coding agent that can load the skill, directly or through a native plugin
+- A Git repository for Developer mode
+- GitHub CLI (`gh`) installed and authenticated for Reviewer mode
+- Access to the target repository and pull request
+- Repository-defined test or analysis commands for mechanical verification
+- Compatible read-only tools when external evidence is required
+
+The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
 
 ### Features
 
@@ -170,56 +247,7 @@ Advisory triage candidates for human review; not automatic merge gates or author
 - Personal style preferences and vague general advice
 - Duplicate or unsupported findings
 
-## 5. Install or Develop
-
-### Runtime requirements
-
-The following environment and access are required to run the review:
-
-- A coding agent that can load the skill, directly or through a native plugin
-- A Git repository for Developer mode
-- GitHub CLI (`gh`) installed and authenticated for Reviewer mode
-- Access to the target repository and pull request
-- Repository-defined test or analysis commands for mechanical verification
-- Compatible read-only tools when external evidence is required
-
-### Supported native packages
-
-The repository contains both native manifests:
-
-```text
-.codex-plugin/plugin.json   # Codex
-.claude-plugin/plugin.json  # Claude Code
-```
-
-Install from the marketplace or source mechanism provided by the selected
-agent. Do not assume one platform's installation command works in another.
-
-### Local development
-
-Codex package validation:
-
-```bash
-python3 /path/to/plugin-creator/scripts/validate_plugin.py /path/to/review
-```
-
-Claude Code local loading and validation:
-
-```bash
-claude --plugin-dir /path/to/review
-```
-
-Validate it before use:
-
-```bash
-claude plugin validate /path/to/review --strict
-```
-
-For another agent, expose `skills/review-pr/SKILL.md` through its supported
-skill or instruction-loading mechanism. Treat that path as an integration to
-test, not as an automatically supported native plugin.
-
-## 6. Usage Guidance
+## 5. Usage Guidance
 
 ### Best Practices
 
@@ -268,7 +296,7 @@ Review this PR: https://github.com/owner/repository/pull/123
 
 The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
 
-## 7. Configuration
+## 6. Configuration
 
 ### Customizing review criteria
 
@@ -311,8 +339,7 @@ Keep orchestration and final-report rules in `skills/review-pr/SKILL.md`.
 
 Give every review-plan item a stable `id` such as `001` and preserve it through layer review and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned item.
 
-
-## 8. Technical Details
+## 7. Technical Details
 
 ### Agent architecture
 
@@ -337,7 +364,7 @@ Reviewer mode uses `gh` for:
 
 If a checkout is required, the workflow uses an isolated temporary worktree and removes it after evidence collection.
 
-## 9. Project Information
+## 8. Project Information
 
 ### Author
 
