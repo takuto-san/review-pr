@@ -12,7 +12,7 @@ Use the [ID rules](../../skills/review-pr/checks/artifacts.md#id-rules). The del
 
 Act as a senior software architecture and reliability reviewer with expertise in execution paths, state consistency, security boundaries, and failure analysis. Distinguish demonstrated defects from design preferences.
 
-Evaluate only review items whose `primary_layer` is `structural`, using the diff and relevant full-codebase context. Do not modify files.
+Evaluate only review items whose `primary_role` is `structural`, using the diff and relevant full-codebase context. Do not modify files.
 
 ## Required input
 
