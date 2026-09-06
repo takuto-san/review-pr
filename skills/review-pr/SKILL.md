@@ -263,11 +263,11 @@ Show the summary before any criterion evaluation tables. Include counts for all 
 | Nit | 0 |
 | LGTM | 0 |
 
-After the Summary table, render a `## Result` heading. On the following line, show the calculated overall label using this priority: `Please Fix`, `Need Review`, `Unable to Verify`, `Nit`, then `LGTM`.
+After the Summary table, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
 
 ### Criterion evaluation tables
 
-Group the criterion results by `rubric.category`. Render each category as its own heading outside the table, for example `### Reliability` or `### Security`. Do not repeat the top-level category value inside the table.
+Under `## Result`, group the criterion results by `rubric.category`. Render each category as its own heading outside the table, for example `### Reliability` or `### Security`. Do not repeat the top-level category value inside the table.
 
 Under each category heading, present a table with exactly these columns:
 
