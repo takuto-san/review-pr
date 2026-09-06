@@ -22,7 +22,7 @@ depend on any single agent.
 
 ## 1. Overview
 
-The Review PR Plugin gathers relevant context, evaluates whether a change is reviewable, builds a change-specific plan, and audits the implementation from mechanical, structural, and contextual perspectives. The orchestrator consolidates those results and checks the evidence of findings that may require a fix.
+The Review PR Plugin gathers relevant context, evaluates whether a change is reviewable, builds a change-specific review plan, and collects mechanical, structural, and contextual evidence for the selected review criteria. The orchestrator consolidates that evidence by review criterion and checks findings that may require a fix.
 
 It supports two modes:
 
@@ -46,7 +46,7 @@ manifest only describes how that platform discovers and installs them.
 The core workflow requires an agent that can read the repository and run
 read-only Git commands. Reviewer mode additionally requires GitHub access
 (normally through `gh`). Parallel role delegation improves coverage, but an
-agent without subagents must report the affected review layer as unavailable
+agent without subagents must report the affected review criteria as unavailable
 rather than silently claiming an equivalent review.
 
 When adding support for another agent, keep `skills/review-pr/`, `REVIEW.md`,
@@ -137,7 +137,7 @@ Review this PR: https://github.com/owner/repository/pull/123
 
 #### Step 4: Check the result
 
-The plugin runs mechanical, structural, and contextual review and returns a consolidated report.
+The plugin generates change-specific review criteria, gathers checks and evidence for each criterion, and returns one consolidated report.
 
 If the report contains `Please Fix` findings, update the implementation and run `$review-pr` again.
 
@@ -189,7 +189,7 @@ Review this PR: https://github.com/owner/repository/pull/123
 
 #### Step 4: Check the result
 
-The plugin runs mechanical, structural, and contextual review and returns a consolidated report.
+The plugin generates change-specific review criteria, gathers checks and evidence for each criterion, and returns one consolidated report.
 
 If the report contains `Please Fix` findings, update the implementation and run `/review-pr` again.
 
@@ -211,20 +211,22 @@ The review is read-only by default. It does not modify source files, install dep
 - Developer and Reviewer modes
 - Review-need validation for pull requests
 - Change-specific planning based on ISO/IEC 25010 quality characteristics
-- Parallel mechanical, structural, and contextual review
+- Parallel mechanical, structural, and contextual evidence collection
+- Criterion-centric consolidation instead of layer-centric reporting
+- Mechanical checks mapped to the review criteria they materially verify
 - Read-only context collection from explicitly referenced sources
 - Compact review context instead of raw source documents
 - Result consolidation, deduplication, and targeted evidence checks for `Please Fix` candidates
-- Explicit review coverage, evidence, and limitations
+- Explicit checks, evidence, coverage, and limitations
 
 ### Review Report Format
 
 ```text
-| Review Layer | Review Item | Label | Result / Evidence |
-|---|---|---|---|
-| Mechanical | Unit tests | LGTM | Existing unit tests passed. |
-| Structural | 001: Recovery | Please Fix | src/example.ts:42: a retry repeats a completed write without an idempotency guard. |
-| Contextual | 002: Date format | Unable to Verify | The supplied specifications conflict; authoritative precedence is missing. |
+| Category | Subcategory | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|---|
+| Reliability | Recoverability | Can retry after notification failure duplicate payment? | Unit tests; Execution path trace | Retry tests passed; idempotency key is reused across retries. | LGTM |
+| Security | Authorization | Can an unauthorized user update another user's resource? | Authorization path review | Ownership validation is missing at `src/auth.ts:42`. | Please Fix |
+| Functional suitability | Functional completeness | Does the export satisfy every supplied acceptance criterion? | Acceptance-criterion mapping; Unit tests | AC-1 is covered; conflicting date-format requirements prevent AC-2 verification. | Unable to Verify |
 
 | Label | Count |
 |---|---|
@@ -280,7 +282,7 @@ Advisory triage candidates for human review; not automatic merge gates or author
 # Ask the installed skill to review the current repository
 Review my local changes
 
-# Inspect the consolidated results, label counts, and limitations
+# Inspect the consolidated criteria, checks, evidence, results, and limitations
 # Fix confirmed problems and rerun the review
 ```
 
@@ -330,14 +332,14 @@ Agent responsibilities and output contracts are defined under `agents/`:
 
 - `skills/review-pr/checks/eligibility.md` — review and agent execution eligibility
 - `skills/review-pr/checks/scope.md` — change scope and reviewer workload
-- `skills/review-pr/checks/artifacts.md` — shared Artifact contract and ID rules
-- `agents/review/mechanical.md` — objective repository checks
-- `agents/review/structural.md` — code and architecture analysis
-- `agents/review/contextual.md` — intent and requirement analysis
+- `skills/review-pr/checks/artifacts.md` — shared Artifact contract, criterion-centric model, and ID rules
+- `agents/review/mechanical.md` — objective repository checks and criterion associations
+- `agents/review/structural.md` — code and architecture checks and evidence
+- `agents/review/contextual.md` — intent and requirement checks and evidence
 
 Keep orchestration and final-report rules in `skills/review-pr/SKILL.md`.
 
-Give every review-plan item a stable `id` such as `001` and preserve it through layer review and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned item.
+Give every review-plan item a stable `id` such as `001` and preserve it through evidence collection and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned item.
 
 ## 7. Technical Details
 
@@ -346,9 +348,10 @@ Give every review-plan item a stable `id` such as `001` and preserve it through 
 - The orchestrator determines whether a pull request needs review and whether each agent can run.
 - The orchestrator gathers source-backed evidence during preparation.
 - The orchestrator classifies cohesion and reviewer workload.
-- The review skill creates a target-specific review plan.
+- The review skill creates target-specific review criteria from `REVIEW.md`.
 - Runnable mechanical checks start during preparation; eligible structural and contextual review run in parallel after planning.
-- The review skill consolidates results, checks `Please Fix` candidates, and formats the final report.
+- Mechanical observations are mapped to the criteria they materially verify.
+- The review skill consolidates checks and evidence by review criterion, checks `Please Fix` candidates, and formats the final report.
 
 ### Context handling
 
@@ -378,6 +381,6 @@ Licensed under the [MIT License](LICENSE).
 
 ## Review evaluation and batching
 
-Structural and contextual work is split into batches of at most five related items per invocation (prefer three to five; smaller batches are valid). The orchestrator assigns unique batch Artifact IDs and consolidates results with exactly one result per assigned item. Three review layers can therefore require more than three agent invocations.
+Structural and contextual work is split into batches of at most five related items per invocation (prefer three to five; smaller batches are valid). The orchestrator assigns unique batch Artifact IDs and consolidates results with exactly one final result per review-plan item. Internal evidence collection can therefore require more than three agent invocations without changing the user-facing report structure.
 
 Conformance has four levels plus a separate `not_assessable` state. The orchestrator maps evaluations to the five workflow labels in `REVIEW.md` and checks the evidence of every `Please Fix` candidate. Labels and suggested fixes support human triage; they do not automatically authorize author requests or merge decisions.
