@@ -15,10 +15,10 @@ depend on any single agent.
   - [Directory Structure](#directory-structure)
   - [Review Workflow](#review-workflow)
 - [4. How to Use](#4-how-to-use)
-- [5. Usage Guidance](#5-usage-guidance)
-- [6. Configuration](#6-configuration)
-- [7. Technical Details](#7-technical-details)
-- [8. Project Information](#8-project-information)
+  - [Codex](#codex)
+  - [Claude Code](#claude-code)
+  - [Requirements](#requirements)
+  - [Features](#features)
 
 ## 1. Overview
 
@@ -39,7 +39,7 @@ manifest only describes how that platform discovers and installs them.
 
 | Agent or harness | Packaging status | How to use it |
 |---|---|---|
-| Codex | Native | Install the `review-pr` package from a configured marketplace, then invoke `$review-pr` or make a matching natural-language request. |
+| Codex | Native | Add this repository as a Codex marketplace, install `review-pr`, then invoke `$review-pr` or make a matching natural-language request. |
 | Claude Code | Native | Install or load the `review-pr` package, then invoke `/review-pr` or make a matching natural-language request. |
 | Other coding agents | Portable skill; native package not yet provided | Import or expose `skills/review-pr/SKILL.md` using the agent's own skill mechanism, then use a natural-language request. |
 
@@ -61,6 +61,9 @@ similarity alone.
 
 ```text
 review-pr/
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json
 ├── .codex-plugin/
 │   └── plugin.json
 ├── .claude-plugin/
@@ -95,9 +98,33 @@ review-pr/
 
 ### Codex
 
-#### Step 1: Install the plugin
+#### Step 1: Add the marketplace
 
-Install the `review-pr` plugin using the supported Codex plugin mechanism.
+Add this GitHub repository as a Codex plugin marketplace:
+
+```bash
+codex plugin marketplace add takuto-san/review-pr --ref main
+```
+
+You can verify that the marketplace is configured with:
+
+```bash
+codex plugin marketplace list
+```
+
+#### Step 2: Install the plugin
+
+Install `review-pr` from the marketplace:
+
+```bash
+codex plugin add review-pr@review-pr
+```
+
+You can verify the installation with:
+
+```bash
+codex plugin list
+```
 
 For local development, validate the package with:
 
@@ -105,13 +132,13 @@ For local development, validate the package with:
 python3 /path/to/plugin-creator/scripts/validate_plugin.py /path/to/review-pr
 ```
 
-#### Step 2: Open the target repository
+#### Step 3: Open the target repository
 
-Start Codex in the repository you want to review.
+Start a new Codex task in the repository you want to review.
 
 To review a GitHub pull request, make sure GitHub CLI (`gh`) is installed and authenticated.
 
-#### Step 3: Run the review
+#### Step 4: Run the review
 
 Review local changes:
 
@@ -135,11 +162,22 @@ Review PR 123
 Review this PR: https://github.com/owner/repository/pull/123
 ```
 
-#### Step 4: Check the result
+#### Step 5: Check the result
 
 The plugin generates change-specific review criteria, gathers checks and evidence for each criterion, and returns one consolidated report.
 
 If the report contains `Please Fix` findings, update the implementation and run `$review-pr` again.
+
+#### Updating the plugin
+
+Refresh the marketplace snapshot and reinstall the plugin:
+
+```bash
+codex plugin marketplace upgrade review-pr
+codex plugin add review-pr@review-pr
+```
+
+Start a new Codex task after reinstalling so the updated skills are loaded into the new session.
 
 ### Claude Code
 
@@ -218,185 +256,3 @@ The review is read-only by default. It does not modify source files, install dep
 - Compact review context instead of raw source documents
 - Result consolidation, deduplication, and targeted evidence checks for `Please Fix` candidates
 - Explicit checks, evidence, coverage, and limitations
-
-### Review Report Format
-
-```text
-## Summary
-
-| Label | Count |
-|---|---|
-| Please Fix | 1 |
-| Need Review | 0 |
-| Unable to Verify | 1 |
-| Nit | 0 |
-| LGTM | 1 |
-
-Overall: Please Fix
-
-### Reliability
-
-| Category | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|
-| Recoverability | Can retry after notification failure duplicate payment? | Unit tests; Execution path trace | Retry tests passed; idempotency key is reused across retries. | LGTM |
-
-### Security
-
-| Category | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|
-| Authorization | Can an unauthorized user update another user's resource? | Authorization path review | Ownership validation is missing at `src/auth.ts:42`. | Please Fix |
-
-### Functional suitability
-
-| Category | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|
-| Functional completeness | Does the export satisfy every supplied acceptance criterion? | Acceptance-criterion mapping; Unit tests | AC-1 is covered; conflicting date-format requirements prevent AC-2 verification. | Unable to Verify |
-
-Advisory triage candidates for human review; not automatic merge gates or author requests.
-```
-
-The top-level quality characteristic is shown as a section heading. Inside each table, the `Category` column contains the corresponding subcategory from the internal rubric.
-
-#### False Positives Filtered
-
-- Pre-existing issues not materially affected by the change
-- Hypothetical problems without a realistic execution path
-- Formatting, lint, or simple type errors already covered by CI
-- Personal style preferences and vague general advice
-- Duplicate or unsupported findings
-
-## 5. Usage Guidance
-
-### Best Practices
-
-- Keep pull request descriptions focused on intent, behavior, and constraints.
-- Link relevant issues, specifications, and decisions explicitly.
-- Run the review from a clean, valid Git repository.
-- Treat findings as evidence for a human decision, not as automatic approval or rejection.
-- Keep repository-defined tests and static-analysis commands aligned with CI.
-
-#### When to Use
-
-- Local changes before opening a pull request
-- Pull requests with meaningful behavior or architecture changes
-- Changes touching critical code paths, persistence, authentication, or external services
-- Changes whose requirements or compatibility must be checked against linked sources
-- Refactors whose behavior and codebase impact need independent verification
-
-#### When Not to Use
-
-- When there are no commits or working-tree changes to review
-- For formatting-only or generated-file changes already enforced by automation
-- As a substitute for missing product requirements or human judgment
-- When the target cannot be accessed with the available read-only tools
-
-### Workflow Integration
-
-#### Local Review Workflow
-
-```text
-# Ask the installed skill to review the current repository
-Review my local changes
-
-# Inspect the consolidated criteria, checks, evidence, results, and limitations
-# Fix confirmed problems and rerun the review
-```
-
-#### Pull-Request Review Workflow
-
-```text
-# Review by number or URL
-Review PR 123
-Review this PR: https://github.com/owner/repository/pull/123
-
-# Confirm findings and make the final human review decision
-```
-
-The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
-
-## 6. Configuration
-
-### Customizing review criteria
-
-Edit `REVIEW.md` to change quality concerns, applicability conditions, verification guidance, result classifications, or final-report policy.
-
-The default coverage model considers these ISO/IEC 25010 quality characteristics:
-
-- Functional suitability
-- Reliability
-- Performance efficiency
-- Usability
-- Security
-- Compatibility
-- Maintainability
-- Portability
-
-Only criteria applicable to the current change are selected.
-
-Change Scope follows the conceptual guidance in
-[Google's Small CLs](https://google.github.io/eng-practices/review/developer/small-cls.html):
-prefer one minimal, self-contained change; include related tests and enough
-usage context to understand it; judge size by reviewer workload rather than a
-hard line-count limit; and permit safe splitting into independent or explicitly
-ordered changes that keep each submitted state valid. Scope concerns are
-reported using the simple `ok` or `warning` status; warnings may include a
-safe split suggestion but do not block or skip the code review.
-
-### Customizing agents
-
-Agent responsibilities and output contracts are defined under `agents/`:
-
-- `skills/review-pr/checks/eligibility.md` — review and agent execution eligibility
-- `skills/review-pr/checks/scope.md` — change scope and reviewer workload
-- `skills/review-pr/checks/artifacts.md` — shared Artifact contract, criterion-centric model, and ID rules
-- `agents/review/mechanical.md` — objective repository checks and criterion associations
-- `agents/review/structural.md` — code and architecture checks and evidence
-- `agents/review/contextual.md` — intent and requirement checks and evidence
-
-Keep orchestration and final-report rules in `skills/review-pr/SKILL.md`.
-
-Give every review-plan criterion a stable `criterion_id` such as `001` and preserve it through evidence collection and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned criterion.
-
-## 7. Technical Details
-
-### Agent architecture
-
-- The orchestrator determines whether a pull request needs review and whether each agent can run.
-- The orchestrator gathers source-backed evidence during preparation.
-- The orchestrator classifies cohesion and reviewer workload.
-- The review skill creates target-specific review criteria from `REVIEW.md`.
-- Runnable mechanical checks start during preparation; eligible structural and contextual review run in parallel after planning.
-- Mechanical observations are mapped to the criteria they materially verify.
-- The review skill consolidates checks and evidence by review criterion, checks `Please Fix` candidates, and formats the final report.
-
-### Context handling
-
-The orchestrator follows only references connected to the review target. Later stages receive compact context rather than raw Notion, Confluence, Google Docs, GitHub, web, or repository documents. Missing and conflicting sources remain explicit in the context and final coverage.
-
-### GitHub integration
-
-Reviewer mode uses `gh` for:
-
-- Resolving pull request metadata, branches, and SHAs
-- Reading changed files, diffs, linked issues, and checks
-- Accessing repository information without modifying the working tree
-
-If a checkout is required, the workflow uses an isolated temporary worktree and removes it after evidence collection.
-
-## 8. Project Information
-
-### Author
-
-takuto-san
-
-### Version
-
-0.1.0
-
-Licensed under the [MIT License](LICENSE).
-
-## Review evaluation and batching
-
-Structural and contextual work is split into batches of at most five related criteria per invocation (prefer three to five; smaller batches are valid). The orchestrator assigns unique batch Artifact IDs and consolidates results with exactly one final result per review-plan criterion. Internal evidence collection can therefore require more than three agent invocations without changing the user-facing report structure.
-
-Conformance has four levels plus a separate `not_assessable` state. The orchestrator maps evaluations to the five workflow labels in `REVIEW.md` and checks the evidence of every `Please Fix` candidate. Labels and suggested fixes support human triage; they do not automatically authorize author requests or merge decisions.
