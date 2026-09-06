@@ -145,7 +145,7 @@ Reuse collected metadata and diff statistics, group substantive changes by purpo
 
 As the orchestrator, read the repository's `REVIEW.md` and build the review plan directly from the collected context, Change Scope result, PR description, linked issues, changed files, and diff.
 
-At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
+At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable review-only criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
 
 Consider all eight quality characteristics as a coverage check, but select only the criteria relevant to this change. Use each criterion's applicability rules to turn it into a concrete, PR-specific review criterion/question.
 
@@ -178,14 +178,14 @@ Every delegated structural and contextual reviewer must return exactly one resul
 
 After the review plan is complete, apply the agent eligibility procedure in `skills/review-pr/checks/eligibility.md` to `structural` and `contextual`.
 
-Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable criterion IDs as `Unable to Verify` with the concrete reason.
+Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable `criterion_id` values as `Unable to Verify` with the concrete reason.
 
 Run eligible roles in parallel while any already-started mechanical checks continue. Use these role definitions:
 
 - `agents/review/structural.md`
 - `agents/review/contextual.md`
 
-Give the structural and contextual agents the shared target context, Change Scope result, only the review criteria assigned to their `primary_role`, relevant supporting-role information, and applicable repository guidance.
+Give the structural and contextual agents the shared target context, Change Scope result, only the review-plan criteria assigned to their `primary_role`, relevant supporting-role information, and applicable repository guidance.
 
 Give the collected context to the contextual reviewer; do not give it raw source documents or permission to expand the retrieval scope. Give the full diff and codebase context to the structural reviewer.
 
@@ -222,7 +222,7 @@ The review-plan criterion is the sole user-facing consolidation unit. Produce ex
 For each criterion:
 
 1. Copy `rubric.category`, `rubric.subcategory`, and the PR-specific `rubric.question` from the review plan.
-2. Gather all performed checks associated with its `criterion_id` from mechanical, structural, and contextual results.
+2. Gather all performed checks associated with that `criterion_id` from mechanical, structural, and contextual results.
 3. Keep `Checks` and `Evidence` separate:
    - `Checks` = verification activities actually performed.
    - `Evidence` = concrete observations produced by those checks.
@@ -232,7 +232,7 @@ For each criterion:
 
 Do not expose internal role names as user-facing checks. For example, use `Unit tests`, `Static analysis`, `Execution path trace`, `Authorization path review`, `Requirement trace`, or `Acceptance-criterion mapping` rather than `Mechanical`, `Structural`, or `Contextual`.
 
-Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every result `criterion_id` and every mechanical criterion association must reference an existing review-plan criterion. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
+Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every result `criterion_id` and every mechanical `criterion_id` association must reference an existing review-plan criterion. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
 
 Use these labels:
 
@@ -275,6 +275,6 @@ Preserve concrete evidence and missing-information details, but do not expose in
 
 ## Completion requirements
 
-Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan criterion was consolidated exactly once by `criterion_id`, and every `Please Fix` candidate received a targeted evidence check.
+Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan `criterion_id` was consolidated exactly once, and every `Please Fix` candidate received a targeted evidence check.
 
 If any requirement is missing, clearly mark the review as incomplete and state the reason.
