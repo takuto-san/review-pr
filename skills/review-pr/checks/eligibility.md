@@ -59,13 +59,13 @@ For every agent:
 
 1. Confirm its registered definition and required tools are available.
 2. Confirm all required target data and input Artifacts are present and valid.
-3. Confirm that the review plan assigns at least one applicable item, except
+3. Confirm that the review plan assigns at least one applicable criterion, except
    for `mechanical`, which is driven by applicable repository checks.
 4. Set `not_applicable` when no work is assigned. This is not an incomplete
    review.
 5. Set `unavailable` when applicable work exists but a required input, tool,
    permission, runtime, dependency, configuration value, or service is missing.
-   Record the affected checks or review-plan IDs so they can be reported as
+   Record the affected checks or review-plan criterion IDs so they can be reported as
    `Unable to Verify`.
 6. Set `ready` only when the agent can start with all applicable work. Use
    `partial` only for `mechanical` when at least one applicable command can run
@@ -80,10 +80,10 @@ evidence when local execution is unavailable. Pass only commands classified as
 runnable to the mechanical agent.
 
 For `structural`, require a valid target, base and head SHAs, changed files,
-complete diff, and at least one assigned structural item. For `contextual`,
+complete diff, and at least one assigned structural criterion. For `contextual`,
 require a valid target, changed files, complete diff, collected context, and at
-least one assigned contextual item. Missing specification evidence for an
-otherwise runnable contextual item is handled by that reviewer as
+least one assigned contextual criterion. Missing specification evidence for an
+otherwise runnable contextual criterion is handled by that reviewer as
 `not_assessable`; it does not by itself make the agent unavailable.
 
 ## Completion criteria
@@ -95,7 +95,7 @@ otherwise runnable contextual item is handled by that reviewer as
 - Check every applicable agent before delegation and set `should_run`
   consistently with its status.
 - Do not delegate agents whose status is `unavailable` or `not_applicable`.
-- Preserve unavailable checks and assigned item IDs for the final report.
+- Preserve unavailable checks and assigned criterion IDs for the final report.
 
 ## Output
 
@@ -138,19 +138,17 @@ Return exactly one A2A-compatible Artifact using `name: review.eligibility` and
     "structural": {
       "status": "ready | unavailable | not_applicable",
       "should_run": "true | false",
-      "assigned_ids": ["001"],
+      "criterion_ids": ["001"],
       "missing_prerequisites": []
     },
     "contextual": {
       "status": "ready | unavailable | not_applicable",
       "should_run": "true | false",
-      "assigned_ids": ["002"],
+      "criterion_ids": ["002"],
       "missing_prerequisites": []
     }
   },
-  "uncertainties": [
-
-  ]
+  "uncertainties": []
 }
 ```
 
