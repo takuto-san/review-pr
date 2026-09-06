@@ -67,7 +67,7 @@ Return exactly one A2A Artifact with the following structure:
     "layer": "mechanical",
     "schema": "review/mechanical",
     "schemaVersion": "1.0",
-    "producer": "review:review:mechanical"
+    "producer": "review-pr:review:mechanical"
   }
 }
 ```

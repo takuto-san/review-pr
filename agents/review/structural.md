@@ -144,7 +144,7 @@ Return exactly one Artifact using the following structure:
     "batchId": "001",
     "schema": "review/structural",
     "schemaVersion": "1.0",
-    "producer": "review:review:structural"
+    "producer": "review-pr:review:structural"
   }
 }
 ```

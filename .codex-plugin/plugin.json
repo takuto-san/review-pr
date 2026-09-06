@@ -1,10 +1,13 @@
 {
-  "name": "review",
+  "name": "review-pr",
   "version": "0.1.0",
   "description": "Review local changes and GitHub pull requests with specialized review agents and evidence-based reporting.",
   "author": {
-    "name": "takuto-san"
+    "name": "takuto-san",
+    "url": "https://github.com/takuto-san"
   },
+  "homepage": "https://github.com/takuto-san/review-pr#readme",
+  "repository": "https://github.com/takuto-san/review-pr",
   "license": "MIT",
   "keywords": [
     "code-review",
@@ -21,11 +24,17 @@
     "capabilities": [
       "Read"
     ],
+    "websiteURL": "https://github.com/takuto-san/review-pr#readme",
+    "privacyPolicyURL": "https://github.com/takuto-san/review-pr/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/takuto-san/review-pr/blob/main/TERMS.md",
     "defaultPrompt": [
       "Review my local changes.",
       "Review PR 123.",
       "Review this GitHub pull request."
     ],
-    "brandColor": "#2563EB"
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/review-pr-icon.png",
+    "logo": "./assets/review-pr-icon.png",
+    "screenshots": []
   }
 }

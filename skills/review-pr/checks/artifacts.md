@@ -18,7 +18,7 @@ payload placed in `parts[0].data`.
     "targetId": "001",
     "schema": "review/context",
     "schemaVersion": "1.0",
-    "producer": "review:review"
+    "producer": "review-pr:review"
   }
 }
 ```

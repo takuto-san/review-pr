@@ -2,20 +2,24 @@
 
 <!-- English | [日本語](docs/README.ja.md) | [简体中文](docs/README.zh-CN.md) -->
 
-Automated review for local changes and GitHub pull requests using specialized agents, repository checks, and evidence-based finding verification.
+An evidence-based review workflow for local changes and GitHub pull requests.
+The reusable workflow lives in `skills/review-pr/`; native plugin manifests make
+it available to supported coding agents without making the review behavior
+depend on any single agent.
 
 ## Table of Contents
 
 - [1. Overview](#1-overview)
-- [2. Architecture](#2-architecture)
+- [2. Agent Compatibility](#2-agent-compatibility)
+- [3. Architecture](#3-architecture)
   - [Directory Structure](#directory-structure)
   - [Review Workflow](#review-workflow)
-- [3. Usage](#3-usage)
-- [4. Installation](#4-installation)
-- [5. Usage Guide](#5-usage-guide)
-- [6. Configuration](#6-configuration)
-- [7. Technical Details](#7-technical-details)
-- [8. Project Information](#8-project-information)
+- [4. Use the Skill](#4-use-the-skill)
+- [5. Install or Develop](#5-install-or-develop)
+- [6. Usage Guidance](#6-usage-guidance)
+- [7. Configuration](#7-configuration)
+- [8. Technical Details](#8-technical-details)
+- [9. Project Information](#9-project-information)
 
 ## 1. Overview
 
@@ -28,16 +32,42 @@ It supports two modes:
 
 This is a clean-room implementation inspired by multi-stage review workflows. Context collection, planning, review, result consolidation, and report generation are implemented entirely by this plugin.
 
-## 2. Architecture
+## 2. Agent Compatibility
+
+`review-pr` is a portable skill first and a platform package second. The Skill,
+review criteria, and role definitions are the source of truth; each platform
+manifest only describes how that platform discovers and installs them.
+
+| Agent or harness | Packaging status | How to use it |
+|---|---|---|
+| Codex | Native | Install the `review-pr` package from a configured marketplace, then invoke `$review-pr` or make a matching natural-language request. |
+| Claude Code | Native | Install or load the `review-pr` package, then invoke `/review-pr` or make a matching natural-language request. |
+| Other coding agents | Portable skill; native package not yet provided | Import or expose `skills/review-pr/SKILL.md` using the agent's own skill mechanism, then use a natural-language request. |
+
+The core workflow requires an agent that can read the repository and run
+read-only Git commands. Reviewer mode additionally requires GitHub access
+(normally through `gh`). Parallel role delegation improves coverage, but an
+agent without subagents must report the affected review layer as unavailable
+rather than silently claiming an equivalent review.
+
+When adding support for another agent, keep `skills/review-pr/`, `REVIEW.md`,
+and the role definitions shared. Add only the agent-specific packaging or
+adapter required for discovery, permissions, and subagent delegation. Document
+the new support level in the table above instead of implying compatibility from
+similarity alone.
+
+## 3. Architecture
 
 ### Directory Structure
 
 ```text
-review/
+review-pr/
 ├── .codex-plugin/
 │   └── plugin.json
 ├── .claude-plugin/
 │   └── plugin.json
+├── assets/
+│   └── review-pr-icon.png
 ├── agents/
 │   └── review/
 │       ├── mechanical.md
@@ -51,13 +81,16 @@ review/
 │           ├── eligibility.md
 │           └── scope.md
 ├── REVIEW.md
+├── PRIVACY.md
 ├── README.md
+├── TERMS.md
 └── LICENSE
 ```
 
 ### Review Workflow
 
 ```mermaid
+%%{init: {"flowchart": {"curve": "stepAfter"}} }%%
 flowchart TD
     A[Load PR or local changes] --> B{Should the review run?}
     B -->|No| X[Explain why the review was skipped]
@@ -77,9 +110,7 @@ flowchart TD
     V --> R[Present the final review report]
 ```
 
-## 3. Usage
-
-### Command: `/review-pr`
+## 4. Use the Skill
 
 Performs an evidence-based review of local changes or a GitHub pull request.
 
@@ -97,14 +128,7 @@ What it does:
 7. Consolidates the results and checks the evidence of `Please Fix` candidates.
 8. Reports findings, human decisions, and explicit limitations.
 
-Usage:
-
-```text
-/review-pr
-/review-pr <PR number>
-```
-
-Natural-language requests are also supported:
+Use a natural-language request in any supported agent:
 
 ```text
 Review my local changes
@@ -112,7 +136,16 @@ Review PR 123
 Review this PR: https://github.com/owner/repository/pull/123
 ```
 
-A pull request URL is supported in a natural-language request, but not as a direct `/review-pr` argument.
+Codex and Claude Code also expose native invocations:
+
+| Platform | Local changes | Pull request |
+|---|---|---|
+| Codex | `$review-pr` | `$review-pr 123` |
+| Claude Code | `/review-pr` | `/review-pr 123` |
+
+A pull request URL is accepted in a natural-language request. In platforms
+that support direct skill arguments, pass only a numeric pull-request number as
+the argument.
 
 ### Features
 
@@ -155,41 +188,40 @@ Advisory triage candidates for human review; not automatic merge gates or author
 - Personal style preferences and vague general advice
 - Duplicate or unsupported findings
 
-## 4. Installation
+## 5. Install or Develop
 
-### Prerequisites
+### Runtime requirements
 
 The following environment and access are required to run the review:
 
-- Codex or Claude Code with plugin and subagent support
+- A coding agent that can load the skill, directly or through a native plugin
 - A Git repository for Developer mode
 - GitHub CLI (`gh`) installed and authenticated for Reviewer mode
 - Access to the target repository and pull request
 - Repository-defined test or analysis commands for mechanical verification
 - Compatible read-only tools when external evidence is required
 
-#### Codex
+### Supported native packages
 
-The repository includes `.codex-plugin/plugin.json`, so it can be installed
-from a Codex local marketplace or submitted as a skills-only plugin. After
-installation, start a new task and invoke the skill explicitly or use natural
-language:
+The repository contains both native manifests:
 
 ```text
-$review-pr
-$review-pr 123
-Review this PR: https://github.com/owner/repository/pull/123
+.codex-plugin/plugin.json   # Codex
+.claude-plugin/plugin.json  # Claude Code
 ```
 
-Validate the Codex package during development:
+Install from the marketplace or source mechanism provided by the selected
+agent. Do not assume one platform's installation command works in another.
+
+### Local development
+
+Codex package validation:
 
 ```bash
 python3 /path/to/plugin-creator/scripts/validate_plugin.py /path/to/review
 ```
 
-#### Claude Code
-
-Load the plugin directly during development:
+Claude Code local loading and validation:
 
 ```bash
 claude --plugin-dir /path/to/review
@@ -201,9 +233,13 @@ Validate it before use:
 claude plugin validate /path/to/review --strict
 ```
 
-## 5. Usage Guide
+For another agent, expose `skills/review-pr/SKILL.md` through its supported
+skill or instruction-loading mechanism. Treat that path as an integration to
+test, not as an automatically supported native plugin.
 
-### Best Practices for `/review-pr`
+## 6. Usage Guidance
+
+### Best Practices
 
 - Keep pull request descriptions focused on intent, behavior, and constraints.
 - Link relevant issues, specifications, and decisions explicitly.
@@ -228,23 +264,21 @@ claude plugin validate /path/to/review --strict
 
 ### Workflow Integration
 
-#### Standard Local Review Workflow
+#### Local Review Workflow
 
 ```text
-# Make changes in a local repository
-/review-pr
+# Ask the installed skill to review the current repository
+Review my local changes
 
 # Inspect the consolidated results, label counts, and limitations
 # Fix confirmed problems and rerun the review
 ```
 
-#### Standard Pull Request Review Workflow
+#### Pull-Request Review Workflow
 
 ```text
-# Review by pull request number
-/review-pr 123
-
-# Or review by URL through natural language
+# Review by number or URL
+Review PR 123
 Review this PR: https://github.com/owner/repository/pull/123
 
 # Confirm findings and make the final human review decision
@@ -252,7 +286,7 @@ Review this PR: https://github.com/owner/repository/pull/123
 
 The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
 
-## 6. Configuration
+## 7. Configuration
 
 ### Customizing review criteria
 
@@ -296,7 +330,7 @@ Keep orchestration and final-report rules in `skills/review-pr/SKILL.md`.
 Give every review-plan item a stable `id` such as `001` and preserve it through layer review and consolidation. Pass required inputs explicitly to each agent, and represent missing evidence as `assessment.evaluation.level: not_assessable` instead of silently omitting an assigned item.
 
 
-## 7. Technical Details
+## 8. Technical Details
 
 ### Agent architecture
 
@@ -321,7 +355,7 @@ Reviewer mode uses `gh` for:
 
 If a checkout is required, the workflow uses an isolated temporary worktree and removes it after evidence collection.
 
-## 8. Project Information
+## 9. Project Information
 
 ### Author
 

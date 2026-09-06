@@ -1,5 +1,5 @@
 {
-  "name": "review",
+  "name": "review-pr",
   "description": "A two-mode review command combining specialized review agents, repository checks, and evidence-based reporting.",
   "version": "0.1.0",
   "author": {
