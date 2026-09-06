@@ -39,7 +39,7 @@ for those criteria; they are evidence sources, not separate final-report rows.
 
 Each review-plan item must preserve:
 
-- `id` — stable review-item identifier
+- `criterion_id` — stable review-criterion identifier
 - `rubric.category` — quality characteristic
 - `rubric.subcategory` — quality subcharacteristic
 - `rubric.criterion` — source criterion selected from `REVIEW.md`
@@ -56,11 +56,11 @@ Do not use `mechanical`, `structural`, or `contextual` as user-facing check name
 Those values may remain in Artifact metadata for orchestration and traceability.
 
 Mechanical results may support, contradict, or be inconclusive for one or more
-review-plan items. Every such association must reference the stable review-item
-ID through `criterion_id`. The association's `assessment` records whether the
-mechanical observation `supports`, `contradicts`, or is `inconclusive` for that
-criterion. A passing command must not be treated as evidence for an unrelated
-criterion merely because both concern the same file or quality category.
+review-plan criteria. Every such association must reference the stable
+`criterion_id`. The association's `assessment` records whether the mechanical
+observation `supports`, `contradicts`, or is `inconclusive` for that criterion.
+A passing command must not be treated as evidence for an unrelated criterion
+merely because both concern the same file or quality category.
 
 ## ID rules
 
@@ -73,15 +73,15 @@ not global identifiers.
 | Field | Meaning | Numbering scope |
 |---|---|---|
 | `metadata.targetId` | The PR or local change set being reviewed | Unique within the run; map it to the repository, PR when applicable, base/head SHAs, and diff in the shared target context |
-| Result `id` / `criterion_id` | One review-plan item | Unique within the target across all roles and batches |
-| `metadata.batchId` | A group of at most five items delegated together | Unique within the target across structural and contextual roles |
+| `criterion_id` | One review-plan criterion | Unique within the target across all roles and batches |
+| `metadata.batchId` | A group of at most five criteria delegated together | Unique within the target across structural and contextual roles |
 | `artifactId` | One output Artifact | Unique across all stages and targets in the run, including consolidated outputs |
 
 Each numbering scope starts at `"001"` independently. A repeated value in
 different fields is valid. Keep assigned IDs unchanged through review and
-verification; do not restart item numbering for each batch. The orchestrator
-supplies each invocation's output `artifactId`, `targetId`, and applicable
-`batchId`; reviewers copy them rather than generating IDs.
+verification; do not restart criterion numbering for each batch. The
+orchestrator supplies each invocation's output `artifactId`, `targetId`, and
+applicable `batchId`; reviewers copy them rather than generating IDs.
 
 Requirement and acceptance-criterion IDs supplied by sources remain unchanged,
 even if they contain letters or hyphens. Their source locations must also be
@@ -89,13 +89,13 @@ preserved.
 
 ## Completion requirements
 
-- Every review-plan item has a stable `id` preserved through review and consolidation.
+- Every review-plan criterion has a stable `criterion_id` preserved through review and consolidation.
 - Every reviewer result uses the shared A2A-compatible Artifact envelope.
 - Every reviewer receives its required inputs explicitly.
-- Each structural and contextual result contains exactly one result per assigned item.
+- Each structural and contextual result contains exactly one result per assigned criterion.
 - Structural and contextual results keep performed `checks` separate from concrete `evidence`.
-- Every mechanical criterion association references an existing review-plan item through `criterion_id` and records its check, assessment, and evidence.
+- Every mechanical criterion association references an existing review-plan criterion through `criterion_id` and records its check, assessment, and evidence.
 - Missing evidence uses `assessment.evaluation.level: not_assessable` instead of omission.
 - Every executed verification command and result is recorded, including commands that cannot be mapped to a review criterion.
-- Final consolidation produces one user-facing result per review-plan item, not one result per review role.
+- Final consolidation produces one user-facing result per review-plan criterion, not one result per review role.
 - The orchestrator does not treat an incomplete review as complete.
