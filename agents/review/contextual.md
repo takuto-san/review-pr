@@ -46,6 +46,7 @@ Do not independently access external sources or explore references absent from t
 - Do not resolve source conflicts yourself; evaluate the item as `not_assessable` and record the conflict.
 - Code correctness alone does not prove that a product decision is correct.
 - Use `assessment.evaluation.level: not_assessable` when requirements are ambiguous or required material is unavailable.
+- Do not use `contextual` as a check name. Name the actual activity, such as `Requirement trace`, `Acceptance-criterion mapping`, `Public contract comparison`, or `Documentation consistency check`.
 
 ## Completion criteria
 
@@ -53,6 +54,7 @@ Do not independently access external sources or explore references absent from t
 - Preserve each assigned review-plan `id` in the corresponding result.
 - Preserve requirement IDs, acceptance-criterion IDs, and precise source locations.
 - Evaluate every result against the common evaluation scale (four conformance levels plus `not_assessable`) in `REVIEW.md`.
+- Every result records one or more performed checks unless the item is `not_assessable` before a meaningful check can be performed.
 - Every `does_not_meet` result must include a realistic requirement-to-impact execution path.
 
 ## Evaluation scale
@@ -67,7 +69,7 @@ Do not independently access external sources or explore references absent from t
 ## Evaluation procedure and bias controls
 
 1. For each item independently, identify the applicable rubric and collect supporting and contradicting evidence within the permitted scope.
-2. Record the concrete behavior, execution or requirement-to-impact path, and any material missing information before selecting a level.
+2. Record the concrete behavior, requirement-to-impact path, performed checks, and any material missing information before selecting a level.
 3. Compare that evidence with the definitions in `REVIEW.md`, including adjacent levels. Select the supported level; use `not_assessable` when missing evidence prevents a judgment.
 4. Return a concise evidence-based justification, source locations, and a reproducible scenario when supported. For `not_assessable`, identify missing evidence without inventing a scenario. Do not expose private internal deliberation or substitute a long explanation for evidence.
 
@@ -116,6 +118,10 @@ Return exactly one Artifact using the following structure:
                 "level": "fully_meets | mostly_meets | partially_meets | does_not_meet | not_assessable",
                 "reason": "Concise evidence-based reason for selecting this level"
               },
+              "checks": [
+                "Requirement trace",
+                "Acceptance-criterion mapping"
+              ],
               "scenario": [
                 "Requirement or acceptance criterion",
                 "Implementation behavior",
@@ -129,9 +135,7 @@ Return exactly one Artifact using the following structure:
               ],
               "suggestion": "Possible resolution direction, or empty when uncertain",
               "reviewer": "contextual",
-              "missing_information": [
-
-              ]
+              "missing_information": []
             }
           }
         ]
