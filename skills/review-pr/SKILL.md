@@ -24,7 +24,7 @@ The review is read-only. Do not modify source files, install dependencies, chang
 
 Detailed review criteria are defined in `REVIEW.md`. Detailed responsibilities and output schemas are defined by the agents under `agents/`.
 
-Follow the [ID rules](checks/artifacts.md#id-rules) when assigning target, item, batch, and output Artifact IDs. Pass assigned output IDs explicitly to each agent.
+Follow the [ID rules](checks/artifacts.md#id-rules) when assigning target, criterion, batch, and output Artifact IDs. Pass assigned output IDs explicitly to each agent.
 
 ## 1. Resolve the review target
 
@@ -70,7 +70,7 @@ If its status is `unavailable` or `not_applicable`, do not delegate it; preserve
 
 Do not wait for context, scope analysis, or the review plan. Retain any task handle and its result or failure; never launch it a second time. Keep an isolated worktree available until all agents using it finish.
 
-Because mechanical checks may finish before `review.plan` exists, they may initially return command results without criterion associations. After the plan is created, the orchestrator must map each mechanical observation only to review-plan items it materially verifies. Do not invent a mapping merely because a command passed.
+Because mechanical checks may finish before `review.plan` exists, they may initially return command results without criterion associations. After the plan is created, the orchestrator must map each mechanical observation only to review-plan criteria it materially verifies. Do not invent a mapping merely because a command passed.
 
 ## 3. Collect and organize context
 
@@ -139,19 +139,19 @@ As part of planning, the orchestrator analyzes scope directly using the procedur
 
 Reuse collected metadata and diff statistics, group substantive changes by purpose, account for all files, and assess minimality, self-containment, cohesion, understandability, and reviewer workload. Safe splits may be independent or submitted in an explicit dependency order that keeps every intermediate state valid. Produce `review.scope` before `review.plan`, preserving uncertainties and the existing scope classifications.
 
-`warning` is advisory. It never stops the workflow, makes an agent ineligible, suppresses an applicable review item, or maps to a workflow finding label. Continue all applicable review criteria and state the warning reason, any safe split suggestion, concrete confidence limitations, missing context, and unreviewed areas in the final report.
+`warning` is advisory. It never stops the workflow, makes an agent ineligible, suppresses an applicable review criterion, or maps to a workflow finding label. Continue all applicable review criteria and state the warning reason, any safe split suggestion, concrete confidence limitations, missing context, and unreviewed areas in the final report.
 
 ## 5. Build the review plan
 
 As the orchestrator, read the repository's `REVIEW.md` and build the review plan directly from the collected context, Change Scope result, PR description, linked issues, changed files, and diff.
 
-At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable review-only IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
+At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
 
 Consider all eight quality characteristics as a coverage check, but select only the criteria relevant to this change. Use each criterion's applicability rules to turn it into a concrete, PR-specific review criterion/question.
 
-For every selected review-plan item preserve:
+For every selected review-plan criterion preserve:
 
-- `id`
+- `criterion_id`
 - `rubric.category`
 - `rubric.subcategory`
 - `rubric.criterion`
@@ -161,43 +161,43 @@ For every selected review-plan item preserve:
 - supporting roles
 - expected checks and evidence when known
 
-Assign every selected item to one primary role:
+Assign every selected criterion to one primary role:
 
 - `structural`: design, dependencies, state, execution paths, performance, security, maintainability, and test design
 - `contextual`: requirements, user value, PR intent, compatibility policy, migration decisions, and documentation
 
-Mechanical checks are supporting evidence and do not become a primary review-plan role. When a repository command can materially verify a selected criterion, record that expected relationship so its observed result can later be attached to the item.
+Mechanical checks are supporting evidence and do not become a primary review-plan role. When a repository command can materially verify a selected criterion, record that expected relationship so its observed result can later be attached to the criterion.
 
-Do not add generic review items merely for completeness.
+Do not add generic review criteria merely for completeness.
 
 Package the completed review plan as an A2A-compatible Artifact named `review.plan` with `metadata.schema: review/plan` before delegating structural and contextual work.
 
-Every delegated structural and contextual reviewer must return exactly one result for every item assigned to it and preserve the item's `id`. Items assigned to an unavailable reviewer are recorded as `Unable to Verify`. Each result contains `assessment.evaluation`; missing evidence must produce `assessment.evaluation.level: not_assessable` rather than omission.
+Every delegated structural and contextual reviewer must return exactly one result for every criterion assigned to it and preserve the criterion's `criterion_id`. Criteria assigned to an unavailable reviewer are recorded as `Unable to Verify`. Each result contains `assessment.evaluation`; missing evidence must produce `assessment.evaluation.level: not_assessable` rather than omission.
 
 ## 6. Run the review roles
 
 After the review plan is complete, apply the agent eligibility procedure in `skills/review-pr/checks/eligibility.md` to `structural` and `contextual`.
 
-Check each agent's definition, tools, required inputs, and assigned review-plan items without running a review. Do not delegate an agent with no assigned items or missing prerequisites. Preserve unavailable assigned IDs as `Unable to Verify` with the concrete reason.
+Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable criterion IDs as `Unable to Verify` with the concrete reason.
 
 Run eligible roles in parallel while any already-started mechanical checks continue. Use these role definitions:
 
 - `agents/review/structural.md`
 - `agents/review/contextual.md`
 
-Give the structural and contextual agents the shared target context, Change Scope result, only the review items assigned to their `primary_role`, relevant supporting-role information, and applicable repository guidance.
+Give the structural and contextual agents the shared target context, Change Scope result, only the review criteria assigned to their `primary_role`, relevant supporting-role information, and applicable repository guidance.
 
 Give the collected context to the contextual reviewer; do not give it raw source documents or permission to expand the retrieval scope. Give the full diff and codebase context to the structural reviewer.
 
-Partition each structural and contextual role's assigned items into batches of at most five related items before delegation. Prefer three to five items when available; allow smaller batches and never add irrelevant items to fill a batch.
+Partition each structural and contextual role's assigned criteria into batches of at most five related criteria before delegation. Prefer three to five criteria when available; allow smaller batches and never add irrelevant criteria to fill a batch.
 
-Each invocation evaluates only its batch and returns one result per assigned ID. Give every batch the required shared context and a target-local unique batch ID such as `"001"`. Assign numeric-string Artifact IDs using the ID rules in `skills/review-pr/checks/artifacts.md`.
+Each invocation evaluates only its batch and returns one result per assigned `criterion_id`. Give every batch the required shared context and a target-local unique batch ID such as `"001"`. Assign numeric-string Artifact IDs using the ID rules in `skills/review-pr/checks/artifacts.md`.
 
-Store `targetId`, `batchId`, and `layer` in metadata. The consolidated Artifact receives a new `artifactId` and omits `batchId`. Combine batch results into one Artifact per internal role before criterion-centric consolidation, and check that every delegated ID appears exactly once with no missing or extra IDs.
+Store `targetId`, `batchId`, and `layer` in metadata. The consolidated Artifact receives a new `artifactId` and omits `batchId`. Combine batch results into one Artifact per internal role before criterion-centric consolidation, and check that every delegated `criterion_id` appears exactly once with no missing or extra criterion IDs.
 
 Do not ask an agent to perform another role's primary responsibility.
 
-For each review delegation, explicitly include the repository root, review target, base and head SHAs, changed files, complete diff or an unambiguous location for it, assigned review items, and any agent-specific inputs required by its definition. Do not assume that a subagent can recover orchestration state from the parent conversation.
+For each review delegation, explicitly include the repository root, review target, base and head SHAs, changed files, complete diff or an unambiguous location for it, assigned review criteria, and any agent-specific inputs required by its definition. Do not assume that a subagent can recover orchestration state from the parent conversation.
 
 ### Mechanical checks
 
@@ -205,34 +205,34 @@ The mechanical reviewer must run the repository commands classified as runnable 
 
 Do not install dependencies, add tools, change configuration, or execute destructive commands. For an external or otherwise untrusted pull request, do not execute repository-controlled code without explicit user approval. Record an A2A task failure when required verification cannot be started.
 
-The mechanical Artifact uses `name: review.mechanical`. Its payload contains a `result` array with only commands that were actually executed. Each entry records its name, command, `status`, observed summary, and zero or more `criterion_support` entries. Each `criterion_support` entry references a review-plan item through `criterion_id` and records the actual check, `assessment` (`supports`, `contradicts`, or `inconclusive`), and observed evidence.
+The mechanical Artifact uses `name: review.mechanical`. Its payload contains a `result` array with only commands that were actually executed. Each entry records its name, command, `status`, observed summary, and zero or more `criterion_support` entries. Each `criterion_support` entry references a review-plan criterion through `criterion_id` and records the actual check, `assessment` (`supports`, `contradicts`, or `inconclusive`), and observed evidence.
 
 Executed commands that do not materially verify a selected review criterion must still be retained in the Artifact for coverage accounting, but they must not create standalone rows in the final report.
 
 ## 7. Consolidate the review results
 
-Wait for the early mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable assigned IDs as incomplete reasons and `Unable to Verify` evidence where applicable.
+Wait for the early mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable criterion IDs as incomplete reasons and `Unable to Verify` evidence where applicable.
 
 The orchestrator then consolidates the complete `review.mechanical`, `review.structural`, and `review.contextual` Artifacts directly. Do not delegate this consolidation step.
 
 ### Consolidation unit
 
-The review-plan item is the sole user-facing consolidation unit. Produce exactly one consolidated result for every review-plan item.
+The review-plan criterion is the sole user-facing consolidation unit. Produce exactly one consolidated result for every review-plan criterion.
 
-For each item:
+For each criterion:
 
 1. Copy `rubric.category`, `rubric.subcategory`, and the PR-specific `rubric.question` from the review plan.
-2. Gather all performed checks associated with that item from mechanical, structural, and contextual results.
+2. Gather all performed checks associated with its `criterion_id` from mechanical, structural, and contextual results.
 3. Keep `Checks` and `Evidence` separate:
    - `Checks` = verification activities actually performed.
    - `Evidence` = concrete observations produced by those checks.
 4. Deduplicate semantically identical checks and evidence without dropping materially distinct observations.
 5. Preserve missing information and unavailable verification.
-6. Determine one final evaluation and workflow label for the item.
+6. Determine one final evaluation and workflow label for the criterion.
 
 Do not expose internal role names as user-facing checks. For example, use `Unit tests`, `Static analysis`, `Execution path trace`, `Authorization path review`, `Requirement trace`, or `Acceptance-criterion mapping` rather than `Mechanical`, `Structural`, or `Contextual`.
 
-Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every mechanical `criterion_id` must reference an existing review-plan item. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
+Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every result `criterion_id` and every mechanical criterion association must reference an existing review-plan criterion. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
 
 Use these labels:
 
@@ -265,7 +265,7 @@ Populate the columns as follows:
 - `Evidence`: concise concrete observations, code/source locations, command outcomes, or missing-information details
 - `Result`: one of `Nit`, `LGTM`, `Please Fix`, `Need Review`, or `Unable to Verify`
 
-Include exactly one row per review-plan item. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
+Include exactly one row per review-plan criterion. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
 
 When several checks or evidence entries apply to one criterion, separate them with `<br>` or semicolons while keeping the table readable.
 
@@ -275,6 +275,6 @@ Preserve concrete evidence and missing-information details, but do not expose in
 
 ## Completion requirements
 
-Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan item was consolidated exactly once, and every `Please Fix` candidate received a targeted evidence check.
+Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan criterion was consolidated exactly once by `criterion_id`, and every `Please Fix` candidate received a targeted evidence check.
 
 If any requirement is missing, clearly mark the review as incomplete and state the reason.
