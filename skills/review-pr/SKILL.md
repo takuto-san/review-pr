@@ -1,16 +1,32 @@
 ---
 name: review-pr
 description: Review local code changes or a GitHub Pull Request using eligibility and scope checks, context collection, three specialized review layers, and evidence-based reporting. Use automatically whenever the user asks to review code, review local changes, inspect a PR, provides a PR number for review, or includes a GitHub pull-request URL with review intent, even without a slash command.
-argument-hint: "[PR number]"
-allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Agent
 ---
 
 # Review
 
-Review the target supplied in `$ARGUMENTS` or identified in the user's natural-language request.
+Review the target supplied in the invocation arguments (`$ARGUMENTS` in Claude
+Code) or identified in the user's natural-language request.
 
 This plugin implements its own review workflow. Do not invoke external code
 review plugins or treat their output as a prerequisite.
+
+## Runtime compatibility
+
+This skill supports both Claude Code and Codex. Use the runtime's native
+subagent facility for delegated work:
+
+- In Claude Code, invoke the custom agents under `agents/review/`.
+- In Codex, spawn a general-purpose subagent for each role and include the full
+  matching definition from `agents/review/<role>.md` in its task, together with
+  every required input and assigned Artifact ID. Do not assume Codex discovers
+  Claude Code agent definitions automatically.
+
+Use the logical role names `mechanical`, `structural`, and `contextual` below.
+Run independent eligible roles concurrently when the runtime supports parallel
+delegation. If no subagent facility is available, record the affected layer as
+`Unable to Verify`; do not silently perform a delegated layer in the
+orchestrator.
 
 The review is read-only. Do not modify source files, install dependencies,
 change repository configuration, or post GitHub comments unless the user
@@ -19,7 +35,9 @@ explicitly requests it.
 Detailed review criteria are defined in `REVIEW.md`. Detailed responsibilities
 and output schemas are defined by the agents under `agents/`.
 
-Follow the [ID rules](../../agents/README.md#id-rules) when assigning target, item, batch, and output Artifact IDs. Pass assigned output IDs explicitly to each agent.
+Follow the [ID rules](checks/artifacts.md#id-rules) when assigning target, item,
+batch, and output Artifact IDs. Pass assigned output IDs explicitly to each
+agent.
 
 ## 1. Resolve the review target
 
@@ -64,7 +82,7 @@ Create one shared target context as an A2A-compatible Artifact named
 repository, base SHA, head SHA, diff, changed files, and PR metadata.
 
 All inter-stage inputs and outputs must use the A2A-compatible Artifact defined
-in `agents/README.md`. Validate the artifact name, media type, schema metadata,
+in `skills/review-pr/checks/artifacts.md`. Validate the artifact name, media type, schema metadata,
 and required payload fields, then pass the required Artifacts intact to the
 next stage. Each receiving stage reads typed data from `parts[0].data`. Treat
 missing or malformed artifact payloads as incomplete prerequisites; do not
@@ -95,7 +113,7 @@ the agent eligibility procedure to `mechanical`. Inspect repository-defined
 commands and their required runtimes, installed dependencies, configuration,
 permissions, and services without executing repository-controlled commands.
 
-If its status is `ready` or `partial`, start `review:review:mechanical`
+If its status is `ready` or `partial`, start the `mechanical` role
 concurrently with context collection and pass only the runnable checks. Also
 provide the repository root, target, base and head SHAs, changed files, CI
 status, eligibility evidence, and assigned Artifact IDs. If its status is
@@ -247,11 +265,11 @@ items without running a review. Do not delegate an agent with no assigned items
 or missing prerequisites. Preserve unavailable assigned IDs as `Unable to
 Verify` with the concrete reason.
 
-Run eligible agents in parallel while any already-started mechanical checks
-continue:
+Run eligible roles in parallel while any already-started mechanical checks
+continue. Use these role definitions:
 
-- `review:review:structural`
-- `review:review:contextual`
+- `agents/review/structural.md`
+- `agents/review/contextual.md`
 
 Give the structural and contextual agents the shared target context, Change
 Scope result, only the review items assigned to their `primary_layer`, relevant supporting-layer information,
@@ -268,7 +286,8 @@ at most five related items before delegation. Prefer three to five items when
 available; allow smaller batches and never add irrelevant items to fill a batch.
 Each invocation evaluates only its batch and returns one result per assigned ID.
 Give every batch the required shared context and a target-local unique batch ID
-such as `"001"`. Assign numeric-string Artifact IDs using the ID rules in `agents/README.md`.
+such as `"001"`. Assign numeric-string Artifact IDs using the ID rules in
+`skills/review-pr/checks/artifacts.md`.
 Store `targetId`, `batchId`, and `layer` in metadata. The consolidated
 Artifact receives a new `artifactId` and omits `batchId`. Combine batch results
 into one Artifact per layer using the existing layer schema before the final

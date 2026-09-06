@@ -34,18 +34,20 @@ This is a clean-room implementation inspired by multi-stage review workflows. Co
 
 ```text
 review/
+├── .codex-plugin/
+│   └── plugin.json
 ├── .claude-plugin/
 │   └── plugin.json
 ├── agents/
-│   ├── review/
-│   │   ├── mechanical.md
-│   │   ├── structural.md
-│   │   └── contextual.md
-│   └── README.md
+│   └── review/
+│       ├── mechanical.md
+│       ├── structural.md
+│       └── contextual.md
 ├── skills/
 │   └── review-pr/
 │       ├── SKILL.md
 │       └── checks/
+│           ├── artifacts.md
 │           ├── eligibility.md
 │           └── scope.md
 ├── REVIEW.md
@@ -159,12 +161,33 @@ Advisory triage candidates for human review; not automatic merge gates or author
 
 The following environment and access are required to run the review:
 
-- Claude Code with plugin and agent support
+- Codex or Claude Code with plugin and subagent support
 - A Git repository for Developer mode
 - GitHub CLI (`gh`) installed and authenticated for Reviewer mode
 - Access to the target repository and pull request
 - Repository-defined test or analysis commands for mechanical verification
 - Compatible read-only tools when external evidence is required
+
+#### Codex
+
+The repository includes `.codex-plugin/plugin.json`, so it can be installed
+from a Codex local marketplace or submitted as a skills-only plugin. After
+installation, start a new task and invoke the skill explicitly or use natural
+language:
+
+```text
+$review-pr
+$review-pr 123
+Review this PR: https://github.com/owner/repository/pull/123
+```
+
+Validate the Codex package during development:
+
+```bash
+python3 /path/to/plugin-creator/scripts/validate_plugin.py /path/to/review
+```
+
+#### Claude Code
 
 Load the plugin directly during development:
 
@@ -254,6 +277,7 @@ Agent responsibilities and output contracts are defined under `agents/`:
 
 - `skills/review-pr/checks/eligibility.md` — review and agent execution eligibility
 - `skills/review-pr/checks/scope.md` — change scope and reviewer workload
+- `skills/review-pr/checks/artifacts.md` — shared Artifact contract and ID rules
 - `agents/review/mechanical.md` — objective repository checks
 - `agents/review/structural.md` — code and architecture analysis
 - `agents/review/contextual.md` — intent and requirement analysis

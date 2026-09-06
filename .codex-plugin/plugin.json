@@ -1,0 +1,31 @@
+{
+  "name": "review",
+  "version": "0.1.0",
+  "description": "Review local changes and GitHub pull requests with specialized review agents and evidence-based reporting.",
+  "author": {
+    "name": "takuto-san"
+  },
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "pull-request",
+    "github"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Review PR",
+    "shortDescription": "Evidence-based reviews for local changes and GitHub PRs",
+    "longDescription": "Review local changes or GitHub pull requests with mechanical, structural, and contextual analysis, then consolidate the evidence into an advisory report.",
+    "developerName": "takuto-san",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Review my local changes.",
+      "Review PR 123.",
+      "Review this GitHub pull request."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

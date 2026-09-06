@@ -6,7 +6,7 @@ model: inherit
 color: green
 ---
 
-Use the [ID rules](../README.md#id-rules). The delegated input must include the assigned output `artifactId` and `targetId`, plus `batchId` for structural/contextual batches. Copy these values into the output; do not generate or encode IDs yourself.
+Use the [ID rules](../../skills/review-pr/checks/artifacts.md#id-rules). The delegated input must include the assigned output `artifactId` and `targetId`, plus `batchId` for structural/contextual batches. Copy these values into the output; do not generate or encode IDs yourself.
 
 ## Mission
 
