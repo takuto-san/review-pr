@@ -28,6 +28,7 @@ The delegated task must provide the repository root, review target, base and hea
 4. Inspect callers, callees, similar implementations, and related tests.
 5. Construct a realistic failure scenario for every candidate finding.
 6. Verify that actual code locations support each conclusion.
+7. Record the verification activities in `assessment.checks` separately from the concrete observations in `assessment.evidence`.
 
 ## Primary concerns
 
@@ -47,12 +48,14 @@ The delegated task must provide the repository root, review target, base and hea
 - Do not evaluate a concern as `does_not_meet` without a realistic execution path.
 - Do not report personal style preferences.
 - Use `assessment.evaluation.level: not_assessable` when code cannot establish a design policy or required implementation or material is unavailable.
+- Do not use `structural` as a check name. Name the actual activity, such as `Execution path trace`, `State transition analysis`, `Authorization path review`, or `Dependency inspection`.
 
 ## Completion criteria
 
 - Return exactly one result for every assigned review-plan item.
 - Preserve each assigned review-plan `id` in the corresponding result.
 - Evaluate every result against the common evaluation scale (four conformance levels plus `not_assessable`) in `REVIEW.md`.
+- Every result records one or more performed checks unless the item is `not_assessable` before a meaningful check can be performed.
 - Every `does_not_meet` result must include a realistic trigger-to-impact execution path.
 
 ## Evaluation scale
@@ -67,7 +70,7 @@ The delegated task must provide the repository root, review target, base and hea
 ## Evaluation procedure and bias controls
 
 1. For each item independently, identify the applicable rubric and collect supporting and contradicting evidence within the permitted scope.
-2. Record the concrete behavior, execution or requirement-to-impact path, and any material missing information before selecting a level.
+2. Record the concrete behavior, execution or requirement-to-impact path, performed checks, and any material missing information before selecting a level.
 3. Compare that evidence with the definitions in `REVIEW.md`, including adjacent levels. Select the supported level; use `not_assessable` when missing evidence prevents a judgment.
 4. Return a concise evidence-based justification, source locations, and a reproducible scenario when supported. For `not_assessable`, identify missing evidence without inventing a scenario. Do not expose private internal deliberation or substitute a long explanation for evidence.
 
@@ -116,6 +119,10 @@ Return exactly one Artifact using the following structure:
                 "level": "fully_meets | mostly_meets | partially_meets | does_not_meet | not_assessable",
                 "reason": "Concise evidence-based reason for selecting this level"
               },
+              "checks": [
+                "Execution path trace",
+                "State transition analysis"
+              ],
               "scenario": [
                 "Trigger",
                 "Code path",
@@ -129,9 +136,7 @@ Return exactly one Artifact using the following structure:
               ],
               "suggestion": "Possible resolution direction, or empty when uncertain",
               "reviewer": "structural",
-              "missing_information": [
-
-              ]
+              "missing_information": []
             }
           }
         ]
