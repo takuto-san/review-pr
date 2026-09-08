@@ -18,7 +18,7 @@ This skill supports both Claude Code and Codex. Use the runtime's native subagen
 
 Use the logical role names `mechanical`, `structural`, and `contextual` below. These roles are internal evidence providers. The final report is organized by review criterion, not by role.
 
-Run independent eligible roles concurrently when the runtime supports parallel delegation. If no subagent facility is available, record the affected review criteria as `Unable to Verify`; do not silently perform a delegated role in the orchestrator.
+Run independent eligible roles concurrently when the runtime supports parallel delegation. If no subagent facility is available, record the affected review criteria as `Unable to Verify` and stop the review as incomplete. Delegated review work is mandatory after validation passes: the orchestrator must run at least one eligible review agent and must not replace an agent by using Read, Bash, grep, or equivalent tools to perform that agent's review itself. The orchestrator may use those tools only for its explicitly assigned orchestration duties, including target resolution, eligibility, context collection, planning, consolidation, and the evidence checks required below.
 
 The review is read-only. Do not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests it.
 
@@ -63,6 +63,10 @@ In Developer mode, skip this validation and continue when reviewable local chang
 ### Start mechanical checks early
 
 Once review eligibility passes, or reviewable local changes are found, apply the agent eligibility procedure to `mechanical`. Inspect repository-defined commands and their required runtimes, installed dependencies, configuration, permissions, and services without executing repository-controlled commands.
+
+Treat applicable static analysis, lint, and type-check commands as a validation gate. If their local execution environment is not ready because a runtime, installed dependency, configuration value, permission, or required service is missing, stop the current review before context collection or any review delegation. Tell the user exactly which prerequisite and command are blocked, and ask them either to prepare the environment or explicitly allow those checks to be skipped. Do not install, configure, or silently skip anything.
+
+After the user says the environment is ready, or explicitly permits the skip, ask them to run the review command again; do not resume the stopped invocation automatically. On that new invocation, repeat eligibility and environment inspection before running any repository command. If readiness was claimed but the prerequisite is still missing, stop and announce it again. If the user explicitly permitted a skip, record the affected checks and that permission as an incomplete limitation and continue without those commands. A repository with no applicable static-analysis command is `not_applicable` and does not trigger this pause.
 
 If its status is `ready` or `partial`, start the `mechanical` role concurrently with context collection and pass only the runnable checks. Also provide the repository root, target, base and head SHAs, changed files, CI status, eligibility evidence, and assigned Artifact IDs.
 
@@ -184,6 +188,8 @@ Run eligible roles in parallel while any already-started mechanical checks conti
 
 - `agents/review/structural.md`
 - `agents/review/contextual.md`
+
+Passing validation commits the workflow to delegation. Before doing any review analysis, confirm that at least one of `mechanical`, `structural`, or `contextual` will actually be invoked. If none can be invoked, stop and report the review as incomplete with the missing prerequisites; do not inspect the code with orchestrator tools as a substitute. Once an agent is eligible and has applicable work, invoking it is mandatory, not optional. A completed final report must identify the agent invocations that produced its review results.
 
 Give the structural and contextual agents the shared target context, Change Scope result, only the review-plan criteria assigned to their `primary_role`, relevant supporting-role information, and applicable repository guidance.
 
