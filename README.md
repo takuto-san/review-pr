@@ -17,20 +17,6 @@ It supports two modes:
 - **Developer mode** reviews commits and working-tree changes in the current repository.
 - **Reviewer mode** reviews a GitHub pull request identified by its number or URL.
 
-### Three-layer review model
-
-The three layers separate checks by the kind of evidence and judgment they require. They are specialized evidence providers, not three independent final reviews: their results are consolidated by review criterion into one report.
-
-| Layer | What it examines | Typical examples |
-|---|---|---|
-| **Mechanical** | Facts that repository tooling can verify consistently | Formatting, lint, type checking, compilation, static analysis, and automated tests |
-| **Structural** | How the changed code behaves within the wider codebase | Execution paths, architecture, dependencies, state, error handling, security, performance, and maintainability |
-| **Contextual** | Whether the change matches its purpose and surrounding decisions | PR intent, requirements, acceptance criteria, compatibility policy, migrations, documentation, and user value |
-
-For example, a passing test is Mechanical evidence. Whether the tested design handles retries safely is a Structural question. Whether retry behavior matches the stated product requirement is a Contextual question. Looking at all three prevents automated checks from being mistaken for a complete code review, while avoiding repeated work across reviewers.
-
-This organization is inspired by Greptile's [3-Layer Code Review Checklist](https://www.greptile.com/content-library/code-review-checklist), which distinguishes Mechanical, Structural, and Narrative review. Review PR adapts the Narrative layer as **Contextual** review and implements its own criterion-centric planning, evidence collection, and consolidation workflow.
-
 ### Example review output
 
 Review PR first summarizes the labels, then groups the evaluated review criteria by quality characteristic. Mechanical commands and Structural or Contextual investigation are shown together as checks and evidence for the criterion they support, rather than as separate layer-specific findings.
@@ -62,15 +48,23 @@ Review PR first summarizes the labels, then groups the evaluated review criteria
 
 The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
 
-## 2. Agent Compatibility
+## 2. Architecture
 
-| Agent or harness | Packaging status | How to use it |
+### Three-layer review model
+
+The three layers separate checks by the kind of evidence and judgment they require. They are specialized evidence providers, not three independent final reviews: their results are consolidated by review criterion into one report.
+
+| Layer | What it examines | Typical examples |
 |---|---|---|
-| Codex | Native | Add this repository as a marketplace, install `review-pr`, then invoke `$review-pr` or use a matching natural-language request. |
-| Claude Code | Native | Load `plugins/review-pr/`, then invoke `/review-pr` or use a matching natural-language request. |
-| Other coding agents | Portable skill | Import `plugins/review-pr/skills/review-pr/SKILL.md` using the agent's skill mechanism. |
+| **Mechanical** | Facts that repository tooling can verify consistently | Formatting, lint, type checking, compilation, static analysis, and automated tests |
+| **Structural** | How the changed code behaves within the wider codebase | Execution paths, architecture, dependencies, state, error handling, security, performance, and maintainability |
+| **Contextual** | Whether the change matches its purpose and surrounding decisions | PR intent, requirements, acceptance criteria, compatibility policy, migrations, documentation, and user value |
 
-## 3. Architecture
+For example, a passing test is Mechanical evidence. Whether the tested design handles retries safely is a Structural question. Whether retry behavior matches the stated product requirement is a Contextual question. Looking at all three prevents automated checks from being mistaken for a complete code review, while avoiding repeated work across reviewers.
+
+This organization is inspired by Greptile's [3-Layer Code Review Checklist](https://www.greptile.com/content-library/code-review-checklist), which distinguishes Mechanical, Structural, and Narrative review. Review PR adapts the Narrative layer as **Contextual** review and implements its own criterion-centric planning, evidence collection, and consolidation workflow.
+
+### Package structure
 
 ```text
 review-pr/
@@ -108,7 +102,15 @@ review-pr/
 
 ![Review PR workflow](plugins/review-pr/assets/review-workflow.svg)
 
-## 4. How to Use
+## 3. How to Use
+
+### Supported agents
+
+| Agent or harness | Packaging status | How to use it |
+|---|---|---|
+| Codex | Native | Add this repository as a marketplace, install `review-pr`, then invoke `$review-pr` or use a matching natural-language request. |
+| Claude Code | Native | Load `plugins/review-pr/`, then invoke `/review-pr` or use a matching natural-language request. |
+| Other coding agents | Portable skill | Import `plugins/review-pr/skills/review-pr/SKILL.md` using the agent's skill mechanism. |
 
 ### Codex
 
@@ -166,7 +168,7 @@ Then run:
 /review-pr 123
 ```
 
-## 5. Requirements
+## 4. Requirements
 
 - A Git repository for Developer mode
 - GitHub CLI (`gh`) installed and authenticated for Reviewer mode
@@ -175,7 +177,7 @@ Then run:
 
 The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
 
-## 6. Features
+## 5. Features
 
 - Developer and Reviewer modes
 - Review-need validation for pull requests
