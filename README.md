@@ -33,16 +33,25 @@ Review PR first summarizes the labels, then groups the evaluated review criteria
 
 #### Result
 
+The quality characteristics below are selected for this change from the review criteria in `plugins/review-pr/REVIEW.md`; they are not applied indiscriminately to every review.
+
+##### Selected Quality Characteristics and Reasons
+
+| Quality Characteristic | Reason |
+|---|---|
+| Reliability | `src/payment.ts` changes retry and failure handling around a state-changing payment operation. |
+| Compatibility | The response schema changes a public contract consumed outside the modified component. |
+
 ##### Reliability
 
-| Category | Review Criterion | Checks | Evidence | Result |
+| Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
 | Recoverability | Can a retry after notification failure duplicate a payment? | Unit tests<br>Execution-path trace | Retry tests pass for network errors, but `src/payment.ts:84` repeats the charge after a successful charge followed by a notification failure. | Please Fix |
 | Fault tolerance | Is a temporary dependency failure contained and bounded? | Static analysis<br>Error-path review | The client applies a timeout and a bounded retry policy in `src/client.ts:72`; the relevant automated checks pass. | LGTM |
 
 ##### Compatibility
 
-| Category | Review Criterion | Checks | Evidence | Result |
+| Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
 | Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Unable to Verify |
 

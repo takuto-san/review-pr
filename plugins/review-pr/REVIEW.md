@@ -40,9 +40,10 @@ Use this procedure:
 3. Select affected quality characteristics and subcharacteristics.
 4. Select concerns whose applicability conditions match the change.
 5. Turn each concern into a concrete, PR-specific review criterion/question.
-6. Assign one primary review role (`structural` or `contextual`) and any useful supporting roles. Mechanical checks are supporting evidence, not primary review items.
-7. Preserve the selected Category, Subcategory, source criterion, concrete review criterion/question, expected checks, and expected evidence in the review plan.
-8. Consolidate all performed checks and evidence by review-plan item and show exactly one final result per review criterion.
+6. Record why each selected quality characteristic applies, citing concrete change evidence rather than repeating its definition.
+7. Assign one primary review role (`structural` or `contextual`) and any useful supporting roles. Mechanical checks are supporting evidence, not primary review items.
+8. Preserve the selected Category, Subcategory, source criterion, concrete review criterion/question, selection reason, expected checks, and expected evidence in the review plan.
+9. Consolidate all performed checks and evidence by review-plan item and show exactly one final result per review criterion.
 
 Use the PR description, linked Issues and acceptance criteria, changed files, callers and callees, established architecture, tests, APIs, databases, events, configuration, and external-service impact.
 
@@ -186,14 +187,7 @@ Explain what is wrong, why it matters, when it occurs, and a feasible resolution
 
 # Output format
 
-Follow [the final-report procedure](skills/review-pr/SKILL.md). Present exactly one row per selected review-plan item using these columns:
-
-| Category | Subcategory | Review Criterion | Checks | Evidence | Result |
-|---|---|---|---|---|---|
-
-`Review Criterion` is the concrete PR-specific question generated from the selected concern. Keep Category and Subcategory in their own columns. `Checks` describe what verification was performed; `Evidence` contains the concrete observations produced by those checks. Do not organize the final table by Mechanical, Structural, or Contextual roles and do not create standalone rows for mechanical commands.
-
-After the consolidated table, show counts for all five labels and the overall label. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
+Follow [the final-report procedure](skills/review-pr/SKILL.md). Present the two-column Summary table first and include counts for all five labels, including zero counts. Before the quality-characteristic result tables, explain that the characteristics are change-specific review dimensions and show a `Selected Quality Characteristics and Reasons` heading followed by one `Quality Characteristic | Reason` row for every selected characteristic using concrete change evidence. Group result tables by quality characteristic and label the first table column `Subcategory`. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
 
 # Do not report
 

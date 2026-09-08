@@ -151,7 +151,7 @@ As the orchestrator, read the repository's `REVIEW.md` and build the review plan
 
 At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable review-only criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
 
-Consider all eight quality characteristics as a coverage check, but select only the criteria relevant to this change. Use each criterion's applicability rules to turn it into a concrete, PR-specific review criterion/question.
+Consider all eight quality characteristics as a coverage check, but select only the criteria relevant to this change. Use each criterion's applicability rules to turn it into a concrete, PR-specific review criterion/question. For every selected quality characteristic, record a concise selection reason grounded in concrete change evidence such as changed files, symbols, execution paths, configuration, requirements, or user-visible behavior. Do not use a generic description of the quality characteristic as its selection reason.
 
 For every selected review-plan criterion preserve:
 
@@ -271,19 +271,26 @@ Show the summary before any criterion evaluation tables. Include counts for all 
 
 After the Summary table, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
 
+Before the first category result table, explain briefly that the quality characteristics are review dimensions selected from `REVIEW.md` according to the actual change, not a list that is applied to every review. Then render a `### Selected Quality Characteristics and Reasons` heading so the table's purpose is clear without relying on surrounding prose, followed by a table with exactly these columns:
+
+| Quality Characteristic | Reason |
+|---|---|
+
+Include exactly one row for every distinct `rubric.category` present in the review plan. In `Reason`, summarize the recorded selection reasons and cite concrete anchors from the change, such as affected files, symbols, APIs, state transitions, configuration, or requirements. Do not include an unselected quality characteristic, infer a reason during final formatting, or use circular explanations such as "selected because it is relevant."
+
 ### Criterion evaluation tables
 
 Under `## Result`, group the criterion results by `rubric.category`. Render each category as its own heading outside the table, for example `### Reliability` or `### Security`. Do not repeat the top-level category value inside the table.
 
 Under each category heading, present a table with exactly these columns:
 
-| Category | Review Criterion | Checks | Evidence | Result |
+| Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
 
 Populate the columns as follows:
 
 - Category heading: `rubric.category`
-- `Category`: `rubric.subcategory`
+- `Subcategory`: `rubric.subcategory`
 - `Review Criterion`: the concrete PR-specific `rubric.question`
 - `Checks`: concise list of verification activities actually performed for the criterion
 - `Evidence`: concise concrete observations, code/source locations, command outcomes, or missing-information details
@@ -297,6 +304,6 @@ Preserve concrete evidence and missing-information details, but do not expose in
 
 ## Completion requirements
 
-Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan `criterion_id` was consolidated exactly once, and every `Please Fix` candidate received a targeted evidence check.
+Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, every selected quality characteristic has a concrete change-backed selection reason in the final report, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan `criterion_id` was consolidated exactly once, and every `Please Fix` candidate received a targeted evidence check.
 
 If any requirement is missing, clearly mark the review as incomplete and state the reason.
