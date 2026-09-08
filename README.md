@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/review-pr-icon.png" alt="Review PR Plugin icon" width="180">
+  <img src="plugins/review-pr/assets/review-pr-icon.png" alt="Review PR Plugin icon" width="180">
 </p>
 
 # Review PR Plugin
@@ -16,6 +16,51 @@ It supports two modes:
 
 - **Developer mode** reviews commits and working-tree changes in the current repository.
 - **Reviewer mode** reviews a GitHub pull request identified by its number or URL.
+
+### Three-layer review model
+
+The three layers separate checks by the kind of evidence and judgment they require. They are specialized evidence providers, not three independent final reviews: their results are consolidated by review criterion into one report.
+
+| Layer | What it examines | Typical examples |
+|---|---|---|
+| **Mechanical** | Facts that repository tooling can verify consistently | Formatting, lint, type checking, compilation, static analysis, and automated tests |
+| **Structural** | How the changed code behaves within the wider codebase | Execution paths, architecture, dependencies, state, error handling, security, performance, and maintainability |
+| **Contextual** | Whether the change matches its purpose and surrounding decisions | PR intent, requirements, acceptance criteria, compatibility policy, migrations, documentation, and user value |
+
+For example, a passing test is Mechanical evidence. Whether the tested design handles retries safely is a Structural question. Whether retry behavior matches the stated product requirement is a Contextual question. Looking at all three prevents automated checks from being mistaken for a complete code review, while avoiding repeated work across reviewers.
+
+This organization is inspired by Greptile's [3-Layer Code Review Checklist](https://www.greptile.com/content-library/code-review-checklist), which distinguishes Mechanical, Structural, and Narrative review. Review PR adapts the Narrative layer as **Contextual** review and implements its own criterion-centric planning, evidence collection, and consolidation workflow.
+
+### Example review output
+
+Review PR first summarizes the labels, then groups the evaluated review criteria by quality characteristic. Mechanical commands and Structural or Contextual investigation are shown together as checks and evidence for the criterion they support, rather than as separate layer-specific findings.
+
+#### Summary
+
+| Label | Count |
+|---|---:|
+| Please Fix | 1 |
+| Need Review | 0 |
+| Unable to Verify | 1 |
+| Nit | 0 |
+| LGTM | 1 |
+
+#### Result
+
+##### Reliability
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
+| Recoverability | Can a retry after notification failure duplicate a payment? | Unit tests<br>Execution-path trace | Retry tests pass for network errors, but `src/payment.ts:84` repeats the charge after a successful charge followed by a notification failure. | Please Fix |
+| Fault tolerance | Is a temporary dependency failure contained and bounded? | Static analysis<br>Error-path review | The client applies a timeout and a bounded retry policy in `src/client.ts:72`; the relevant automated checks pass. | LGTM |
+
+##### Compatibility
+
+| Category | Review Criterion | Checks | Evidence | Result |
+|---|---|---|---|---|
+| Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Unable to Verify |
+
+The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
 
 ## 2. Agent Compatibility
 
