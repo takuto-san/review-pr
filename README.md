@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/review-pr-icon.png" alt="Review PR Plugin icon" width="180">
+</p>
+
 # Review PR Plugin
 
 An evidence-based review workflow for local changes and GitHub pull requests.
