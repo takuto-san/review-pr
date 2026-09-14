@@ -16,7 +16,7 @@ Run the repository's existing verification commands and return observed results.
 
 The delegated task must provide the repository root, review target, base and head SHAs, changed files, available CI status, the eligibility result, and the repository commands classified as runnable.
 
-When the review plan already exists, also provide the applicable review-plan items. When mechanical checks start before planning, run the commands first and return the command results; the orchestrator may map those observed results to review-plan items after the plan is created.
+The approved review plan always exists before this agent runs. Provide its applicable review-plan items and criterion IDs so observed results can be associated only with criteria they materially verify.
 
 Do not infer missing inputs from conversation history or retry commands classified as unavailable.
 

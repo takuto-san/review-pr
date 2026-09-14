@@ -46,6 +46,7 @@ Do not independently access external sources or explore references absent from t
 - Do not resolve source conflicts yourself; evaluate the item as `not_assessable` and record the conflict.
 - Code correctness alone does not prove that a product decision is correct.
 - Use `assessment.evaluation.level: not_assessable` when requirements are ambiguous or required material is unavailable.
+- When a human decision remains, populate `assessment.human_handoff` with the decision reason, the most precise relevant code or source location, a concrete question for the human reviewer, and the checks already performed. Do not turn a missing requirement into a vague instruction to review the whole PR.
 - Do not use `contextual` as a check name. Name the actual activity, such as `Requirement trace`, `Acceptance-criterion mapping`, `Public contract comparison`, or `Documentation consistency check`.
 
 ## Completion criteria
@@ -135,7 +136,13 @@ Return exactly one Artifact using the following structure:
               ],
               "suggestion": "Possible resolution direction, or empty when uncertain",
               "reviewer": "contextual",
-              "missing_information": []
+              "missing_information": [],
+              "human_handoff": {
+                "why": "Why AI cannot settle the criterion, or empty if none",
+                "where": "Relevant file:line or source URI and locator, or an explicit unavailable reason",
+                "what_to_verify": "Concrete human decision, or empty if none",
+                "ai_already_verified": ["Actual checks completed for this criterion"]
+              }
             }
           }
         ]

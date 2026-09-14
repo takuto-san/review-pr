@@ -24,11 +24,16 @@ payload placed in `parts[0].data`.
 ```
 
 Use `review.target`, `review.eligibility`, `review.context`, `review.scope`,
-`review.plan`, `review.mechanical`, `review.structural`, and
+`review.plan`, `review.plan-bundle`, `review.mechanical`, `review.structural`, and
 `review.contextual` as artifact names for the corresponding data and stages.
 The orchestrator passes required inputs in these Artifact envelopes, and each
 receiver reads the typed payload from `parts[0].data`. No stage may infer
 missing payload fields from conversation history.
+
+The durable plan bundle and target fingerprint are defined in
+[plan-bundle.md](plan-bundle.md). `plan` creates it and stops before delegation;
+`run` loads and validates it after the user approves the presented plan. The
+Plan ID is internal in normal use and optional for disambiguation.
 
 ## Criterion-centric review model
 
@@ -44,8 +49,11 @@ Each review-plan item must preserve:
 - `rubric.subcategory` — quality subcharacteristic
 - `rubric.criterion` — source criterion selected from `REVIEW.md`
 - `rubric.question` — concrete PR-specific review criterion/question
+- source URI and precise locator, including target-policy, plugin-baseline, or cited-requirement origin
+- selection reason grounded in the target change
 - primary and supporting review roles
 - expected checks and evidence when known
+- planned review strategy (`AI`, `AI + Human`, or `Human`) and the human decision to make when applicable
 
 Reviewer outputs must keep `checks` separate from `evidence`:
 
@@ -98,4 +106,5 @@ preserved.
 - Missing evidence uses `assessment.evaluation.level: not_assessable` instead of omission.
 - Every executed verification command and result is recorded, including commands that cannot be mapped to a review criterion.
 - Final consolidation produces one user-facing result per review-plan criterion, not one result per review role.
+- Planned and final coverage use the same criterion IDs; every `Need Review` item records why human judgment is needed, where to look, what to verify, and what AI already checked.
 - The orchestrator does not treat an incomplete review as complete.

@@ -1,11 +1,26 @@
 ---
 name: review-pr
-description: Review local code changes or a GitHub Pull Request using eligibility and scope checks, context collection, three specialized review roles, and criterion-centric evidence-based reporting. Use automatically whenever the user asks to review code, review local changes, inspect a PR, provides a PR number for review, or includes a GitHub pull-request URL with review intent, even without a slash command.
+description: Plan a review of local changes or a GitHub Pull Request, then run an approved plan using three specialized review roles and criterion-centric evidence. Use for code-review requests, PR numbers or URLs, and explicit review-plan requests.
 ---
 
 # Review
 
-Review the target supplied in the invocation arguments (`$ARGUMENTS` in Claude Code) or identified in the user's natural-language request.
+## Commands and approval boundary
+
+Use one skill with two operations:
+
+- `$review-pr plan [PR number]` (Claude Code: `/review-pr plan [PR number]`) creates a plan for a PR or, without a target, the current local changes. A PR URL in a natural-language request is also accepted. This operation stops after showing the planned coverage. It never delegates a review role or runs repository commands.
+- `$review-pr run` (Claude Code: `/review-pr run`) runs the most recently presented, unambiguously identified plan for the current task and repository. A natural-language approval such as “このプランでレビューして” is equivalent. An optional Plan ID may disambiguate plans, but must never be required in ordinary use. The user must explicitly approve the presented plan; a request to create it is not approval.
+
+Natural-language review requests without an operation start with `plan`; do not run the review in the same turn. A bare numeric PR number starts `plan` for that PR. At `run`, first use the latest plan actually shown in the current task when its target matches the current repository. Across tasks, select a saved plan only when exactly one plan matches the current repository and intended target. If multiple plans could match, show their PR/local target and creation time and ask which plan to use; do not choose merely by file modification time. Reject an ambiguous target. If the user edits proposed coverage, save a revised plan with a new Plan ID and show it before accepting a run request. Plan and run may occur in separate turns or sessions.
+
+The plan is a review contract, not a finding. It names the target snapshot, change context, selected criteria, source and applicability reason for each criterion, expected checks, and whether AI, a human, or both are expected to assess it. A planned human decision is not permission to omit available AI checks.
+
+Persist each completed plan as a JSON `review.plan-bundle` Artifact under the user's local state directory (`$XDG_STATE_HOME/review-pr/plans/` when set, otherwise `~/.local/state/review-pr/plans/`). This is agent state outside the target repository; never add a plan file to the reviewed change. Use a random, non-guessable Plan ID and an atomic write; reject symlinks and avoid overwriting an existing ID. Set owner-only permissions where supported. The bundle contains the target, eligibility, context, scope, plan, exact target fingerprint, creation time, and source locations. Do not store credentials or unrelated source contents. If durable storage is unavailable, stop with a concrete storage error; do not claim that a Plan ID can be resumed. See [the artifact contract](checks/artifacts.md) for the bundle and fingerprint rules.
+
+At `run`, resolve the approved plan as above, then load and validate its bundle before any delegation. Re-resolve the target read-only. For a PR, require the same repository, PR number, base SHA, head SHA, and diff fingerprint; also recheck that it remains open, non-draft, and reviewable. For local changes, require the same repository, base and head SHAs, staged and unstaged patch contents, and relevant untracked file paths and contents. A dirty or changed snapshot is not silently accepted. If any field changed or cannot be verified, stop, show the change, and direct the user to create a new plan. Keep the saved plan intact for audit. Never rebuild coverage silently during `run`.
+
+## Review workflow
 
 This plugin implements its own review workflow. Do not invoke external code review plugins or treat their output as a prerequisite.
 
@@ -32,17 +47,17 @@ Select one mode.
 
 Recognize an explicit GitHub Pull Request URL anywhere in the user's request, including `Review this PR: https://github.com/owner/repo/pull/123`. Treat surrounding natural language as review instructions, not as part of the URL. If multiple PR URLs or conflicting targets are present, reject the request as ambiguous instead of guessing.
 
-When the user invokes this Skill directly, accept either no arguments for Developer mode or one numeric PR number for Reviewer mode. Do not accept a PR URL as a direct Skill argument; ask the user to provide the URL as part of a natural-language review request instead.
+For `plan`, accept no target for Developer mode or one numeric PR number for Reviewer mode. Do not accept a PR URL as a direct Skill argument; ask the user to provide the URL as part of a natural-language request. For `run`, accept no argument or one optional saved Plan ID for disambiguation; never treat a PR number or URL as an implicit Plan ID.
 
 ### Developer mode
 
-When `$ARGUMENTS` is empty and the user's request does not identify a PR, review commits ahead of the current branch's upstream, staged changes, unstaged changes, and relevant untracked source files.
+When `plan` has no target and the user's request does not identify a PR, plan a review of commits ahead of the current branch's upstream, staged changes, unstaged changes, and relevant untracked source files.
 
-Resolve the repository root, current and upstream branches, base and head SHAs, changed files, additions, deletions, and complete diff. If no reviewable changes exist, stop and report that there is nothing to review.
+Resolve the repository root, current and upstream branches, base and head SHAs, changed files, additions, deletions, and complete diff. Include the staged patch, unstaged patch, and relevant untracked file paths and contents in the snapshot fingerprint. If no reviewable changes exist, stop and report that there is nothing to review.
 
 ### Reviewer mode
 
-When `$ARGUMENTS` contains one numeric PR number, or the user's natural-language request contains a pull-request number or URL, resolve with `gh` the repository, PR number, title, description, base and head branches and SHAs, linked issues, changed files, additions, deletions, CI and check status, and draft, closed, or merged state.
+When `plan` has one numeric PR number, or the user's natural-language request contains a pull-request number or URL, resolve with `gh` the repository, PR number, title, description, base and head branches and SHAs, linked issues, changed files, additions, deletions, CI and check status, and draft, closed, or merged state.
 
 Reject ambiguous arguments instead of guessing. Do not alter the user's current working tree. If code must be checked out, create an isolated temporary worktree at the resolved head SHA and remove it after collecting the results.
 
@@ -56,29 +71,16 @@ The orchestrator performs eligibility checking directly using the decision proce
 
 In Reviewer mode, preserve this condition order: closed or merged, draft, trivial, and already reviewed at the current head SHA by the current authenticated reviewer. Obtain missing facts through read-only commands. An uncertain skip condition must result in continuing review with the uncertainty recorded. Produce `review.eligibility` using the existing Artifact contract.
 
-If `should_review` is `false`, stop before context collection and report the status and evidence concisely. Do not collect context or run any review role.
+If `should_review` is `false`, stop before context collection and report the status and evidence concisely. Do not collect context or run any review role. Repeat this decision at `run` for the saved target.
 
 In Developer mode, skip this validation and continue when reviewable local changes exist.
 
-### Start mechanical checks early
+During `plan`, inspect repository-defined verification commands and prerequisites read-only, but do not treat missing tooling as a reason to withhold the plan. Record expected checks and unavailable prerequisites in planned coverage. Run no repository-controlled command and delegate no agent before plan approval.
 
-Once review eligibility passes, or reviewable local changes are found, apply the agent eligibility procedure to `mechanical`. Inspect repository-defined commands and their required runtimes, installed dependencies, configuration, permissions, and services without executing repository-controlled commands.
-
-Treat applicable static analysis, lint, and type-check commands as a validation gate. If their local execution environment is not ready because a runtime, installed dependency, configuration value, permission, or required service is missing, stop the current review before context collection or any review delegation. Tell the user exactly which prerequisite and command are blocked, and ask them either to prepare the environment or explicitly allow those checks to be skipped. Do not install, configure, or silently skip anything.
-
-After the user says the environment is ready, or explicitly permits the skip, ask them to run the review command again; do not resume the stopped invocation automatically. On that new invocation, repeat eligibility and environment inspection before running any repository command. If readiness was claimed but the prerequisite is still missing, stop and announce it again. If the user explicitly permitted a skip, record the affected checks and that permission as an incomplete limitation and continue without those commands. A repository with no applicable static-analysis command is `not_applicable` and does not trigger this pause.
-
-If its status is `ready` or `partial`, start the `mechanical` role concurrently with context collection and pass only the runnable checks. Also provide the repository root, target, base and head SHAs, changed files, CI status, eligibility evidence, and assigned Artifact IDs.
-
-If its status is `unavailable` or `not_applicable`, do not delegate it; preserve the reason and affected checks for final criterion coverage.
-
-Do not wait for context, scope analysis, or the review plan. Retain any task handle and its result or failure; never launch it a second time. Keep an isolated worktree available until all agents using it finish.
-
-Because mechanical checks may finish before `review.plan` exists, they may initially return command results without criterion associations. After the plan is created, the orchestrator must map each mechanical observation only to review-plan criteria it materially verifies. Do not invent a mapping merely because a command passed.
 
 ## 3. Collect and organize context
 
-The orchestrator collects context directly while mechanical checks run. Do not spawn a context agent. Reuse this evidence in scope analysis and planning.
+The orchestrator collects context directly during `plan`. Do not spawn a context agent. Reuse this evidence in scope analysis and planning.
 
 ### Mission
 
@@ -116,6 +118,9 @@ Create one A2A-compatible Artifact using `name: review.context` and `metadata.sc
 {
   "context": {
     "purpose": "Problem solved by the change",
+    "before_after": "Relevant behavior before and after the change, with source-backed detail or an explicit unknown",
+    "affected_components": ["Component or interface affected by the change"],
+    "dependencies": ["Relevant caller, callee, contract, or service dependency"],
     "results": [
       {
         "summary": "Fact that helps downstream agents understand the change",
@@ -149,7 +154,7 @@ Reuse collected metadata and diff statistics, group substantive changes by purpo
 
 As the orchestrator, read the repository's `REVIEW.md` and build the review plan directly from the collected context, Change Scope result, PR description, linked issues, changed files, and diff.
 
-At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable review-only criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement.
+At this stage, extract and classify applicable requirements, acceptance criteria, constraints, and open questions from the source-backed context. Assign stable review-only criterion IDs and preserve their source locations. Do not promote uncited context into a normative requirement. Read the target repository's `REVIEW.md` when present as its team policy; use this plugin's `REVIEW.md` as the general baseline. Preserve each selected source and its precedence. Do not invent project-specific rules from historical comments during a PR review.
 
 Consider all eight quality characteristics as a coverage check, but select only the criteria relevant to this change. Use each criterion's applicability rules to turn it into a concrete, PR-specific review criterion/question. For every selected quality characteristic, record a concise selection reason grounded in concrete change evidence such as changed files, symbols, execution paths, configuration, requirements, or user-visible behavior. Do not use a generic description of the quality characteristic as its selection reason.
 
@@ -161,9 +166,11 @@ For every selected review-plan criterion preserve:
 - `rubric.criterion`
 - `rubric.question`
 - selection reason
+- source URI and precise locator, including whether the criterion comes from the target repository's policy, the plugin baseline, or a cited requirement
 - primary role
 - supporting roles
 - expected checks and evidence when known
+- planned review strategy (`AI`, `AI + Human`, or `Human`) and the concrete human decision when applicable
 
 Assign every selected criterion to one primary role:
 
@@ -174,17 +181,25 @@ Mechanical checks are supporting evidence and do not become a primary review-pla
 
 Do not add generic review criteria merely for completeness.
 
-Package the completed review plan as an A2A-compatible Artifact named `review.plan` with `metadata.schema: review/plan` before delegating structural and contextual work.
+Package the completed review plan as an A2A-compatible Artifact named `review.plan` with `metadata.schema: review/plan`. Validate and save the plan bundle, then show `Planned Review Coverage` before stopping the `plan` operation. List every selected criterion ID, question, source, applicability reason, expected checks, and planned AI/human strategy. Show the Plan ID and target fingerprint details (repository, PR number if any, base/head SHAs, and local snapshot digest when applicable). Ask the user to review or edit this plan and approve it with `run` or a natural-language instruction when ready. The Plan ID is shown only as an optional reference. Do not delegate or continue to step 6 in the same turn, even if the original request asked for a review.
 
 Every delegated structural and contextual reviewer must return exactly one result for every criterion assigned to it and preserve the criterion's `criterion_id`. Criteria assigned to an unavailable reviewer are recorded as `Need Review` with the missing prerequisite. Each result contains `assessment.evaluation`; missing evidence must produce `assessment.evaluation.level: not_assessable` rather than omission.
 
-## 6. Run the review roles
+## 6. Run the approved review plan
+
+This step begins only after explicit approval of the presented plan, through `run` or a natural-language equivalent, followed by loading, validating, and rechecking the saved bundle as described above. Reuse its exact context, scope, and review-plan criterion IDs. A stale or invalid bundle stops the run before repository commands or agent delegation.
+
+Apply the agent eligibility procedure to `mechanical`. Inspect commands and prerequisites without executing them. Treat applicable static analysis, lint, and type-check commands as a validation gate. If a required local runtime, dependency, configuration, permission, or service is missing, stop before delegation and identify the blocked command and prerequisite. The user may prepare the environment or explicitly permit that check to be skipped; record any skip as an incomplete limitation. Do not install, configure, or silently skip anything. On a later `run`, repeat snapshot and readiness validation; a skip does not authorize a different target snapshot.
+
+If `mechanical` is `ready` or `partial`, start it with runnable checks and the saved plan so results can reference existing criterion IDs. If unavailable or not applicable, preserve the reason for coverage accounting. Keep an isolated worktree available until all agents using it finish.
+
+Map each mechanical observation only to saved review-plan criteria it materially verifies. Do not invent a mapping merely because a command passed.
 
 After the review plan is complete, apply the agent eligibility procedure in `skills/review-pr/checks/eligibility.md` to `structural` and `contextual`.
 
 Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable `criterion_id` values as `Need Review` with the concrete reason.
 
-Run eligible roles in parallel while any already-started mechanical checks continue. Use these role definitions:
+Run eligible roles in parallel while mechanical checks continue. Use these role definitions:
 
 - `agents/review/structural.md`
 - `agents/review/contextual.md`
@@ -217,7 +232,7 @@ Executed commands that do not materially verify a selected review criterion must
 
 ## 7. Consolidate the review results
 
-Wait for the early mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable criterion IDs as incomplete reasons. For affected criteria, use `Need Review` and state the missing evidence.
+Wait for the mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable criterion IDs as incomplete reasons. For affected criteria, use `Need Review` and state the missing evidence.
 
 The orchestrator then consolidates the complete `review.mechanical`, `review.structural`, and `review.contextual` Artifacts directly. Do not delegate this consolidation step.
 
@@ -236,6 +251,8 @@ For each criterion:
 5. Preserve missing information and unavailable verification.
 6. Determine one final evaluation and workflow label for the criterion.
 
+Also preserve its planned strategy and record whether AI completed its assigned checks, whether a confirmed defect remains, and whether a human decision remains. `LGTM` means the selected AI checks found no material gap, not that a human approved the PR. A `Nit` is AI-assessed but still visible as a minor observation. Do not mark a criterion as AI-verified when required evidence or an assigned role is missing.
+
 Do not expose internal role names as user-facing checks. For example, use `Unit tests`, `Static analysis`, `Execution path trace`, `Authorization path review`, `Requirement trace`, or `Acceptance-criterion mapping` rather than `Mechanical`, `Structural`, or `Contextual`.
 
 Validate artifact names, schemas, target IDs, batch coverage, result shapes, and criterion associations. Every result `criterion_id` and every mechanical `criterion_id` association must reference an existing review-plan criterion. Ignore an invalid association and record it as an internal incompleteness reason rather than attaching evidence to the wrong criterion.
@@ -247,15 +264,21 @@ Use these labels:
 - `partially_meets` and `does_not_meet` are candidates for `Please Fix`. Before assigning that label, inspect the cited changed code and confirm a realistic trigger-to-impact path. For contextual results, also confirm the cited requirement or acceptance criterion and its implementation location. Use `Need Review` for product, design, or specification decisions.
 - `not_assessable` maps to `Need Review`; state the missing information in the evidence.
 
+For every `Need Review`, consolidate a human handoff containing `why`, `where`, `what_to_verify`, and `ai_already_verified`. Derive it only from performed checks, collected sources, and cited locations. If no precise location exists, say what is unavailable rather than inventing one. Distinguish a human product/design decision from missing tool or environment evidence.
+
 Mechanical evidence modifies the evidence available for a criterion; it does not independently determine the final label merely because a command passed or failed. A passing mechanical check supports only the criterion scope it actually verifies. A failed command contributes `Please Fix` evidence only when its observed output demonstrates a defect introduced or exposed by the change; environment and execution failures leave affected criteria at `Need Review` with the failure reason recorded.
 
 Do not re-review `LGTM` or `Nit` results. If a `Please Fix` candidate is not supported after the targeted check, reject it when it is inapplicable or pre-existing; otherwise classify it as `Need Review` with the missing evidence.
+
+Save the completed criterion-level results outside the target repository alongside the approved plan, preserving its Plan ID and fingerprint. On a later `plan` for the same PR or local target, compare the previous reviewed snapshot to the new one and show which prior criteria are unchanged, resolved, still open, or newly applicable. Reuse an earlier assessment only when its code, requirement, dependency context, and relevant verification evidence remain valid; otherwise include the criterion in the new Planned Review Coverage. Do not assume that a changed-line-only diff is sufficient when a change affects callers, contracts, or other criteria. A new plan still requires approval before the next `run`.
 
 ## 8. Produce the final report
 
 As the orchestrator, produce the final report directly from the Change Scope result, review plan, criterion-centric consolidated results, and incomplete reasons. Do not add new review concerns during consolidation or formatting.
 
 State that the labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize merge, rejection, or author requests.
+
+Lead with the target, Change Scope, and the Summary count table, then a compact `Review Coverage` table using the same criterion IDs and questions shown in Planned Review Coverage. Show for each criterion its planned strategy, checks actually completed, and one status: `AI Verified` for `LGTM`, `AI Checked — Nit` for `Nit`, `Please Fix`, or `Need Review`. The table is a coverage trace, not a claim that AI approved the PR. Put `Needs Your Attention` immediately after it and before the detailed result tables. Include every `Need Review` criterion with columns `Criterion | Why | Where | What to verify | AI already verified`; include `Please Fix` items in a separate compact issue list with their verified location. Human reviewers should be able to identify remaining work without reading every `LGTM` row. Keep the full criterion-level result tables below for audit.
 
 ### Summary
 
@@ -268,7 +291,7 @@ Show the summary before any criterion evaluation tables. Include counts for all 
 | Nit | 0 |
 | LGTM | 0 |
 
-After the Summary table, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
+After the Summary and Review Coverage / Needs Your Attention sections, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
 
 Before the first category result table, explain briefly that the quality characteristics are review dimensions selected from `REVIEW.md` according to the actual change, not a list that is applied to every review. Then render a `### Selected Quality Characteristics and Reasons` heading so the table's purpose is clear without relying on surrounding prose, followed by a table with exactly these columns:
 

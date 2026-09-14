@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Review PR",
     "shortDescription": "Evidence-based reviews for local changes and GitHub PRs",
-    "longDescription": "Review local changes or GitHub pull requests with mechanical, structural, and contextual analysis, then consolidate the evidence into an advisory report.",
+    "longDescription": "Plan a review of local changes or a GitHub pull request, then run the approved plan with mechanical, structural, and contextual evidence.",
     "developerName": "takuto-san",
     "category": "Developer Tools",
     "capabilities": [
@@ -28,9 +28,9 @@
     "privacyPolicyURL": "https://github.com/takuto-san/review-pr/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/takuto-san/review-pr/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Review my local changes.",
-      "Review PR 123.",
-      "Review this GitHub pull request."
+      "Plan a review of my local changes.",
+      "Plan a review of PR 123.",
+      "Run the review plan we just agreed on."
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/review-pr-icon.png",

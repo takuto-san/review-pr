@@ -10,7 +10,20 @@ this repository's Codex marketplace manifest.
 
 ## 1. Overview
 
-Review PR gathers relevant context, evaluates whether a change is reviewable, builds a change-specific review plan, and collects mechanical, structural, and contextual evidence for the selected review criteria.
+Review PR separates planning from review. It first gathers context and shows the change-specific criteria as Planned Review Coverage. After you approve that plan, it collects mechanical, structural, and contextual evidence and updates the same criteria with what AI verified, what needs a fix, and what needs human judgment.
+
+The review has two deliberate steps:
+
+```text
+review-pr plan [PR number] → inspect target, context, scope, and REVIEW.md
+                           → show Planned Review Coverage → stop
+user approves or edits the plan
+review-pr run              → verify the target has not changed
+                           → run three-layer review
+                           → show Review Coverage and Needs Your Attention
+```
+
+The Plan ID is saved internally. In the same task, `run` or a reply such as “このプランでレビューして” uses the plan just shown; you do not have to type an ID. If several saved plans could apply, Review PR asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
 
 It supports two modes:
 
@@ -19,7 +32,17 @@ It supports two modes:
 
 ### Example review output
 
-Review PR first summarizes the labels, then groups the evaluated review criteria by quality characteristic. Mechanical commands and Structural or Contextual investigation are shown together as checks and evidence for the criterion they support, rather than as separate layer-specific findings.
+At planning time, Review PR shows each selected criterion, its source, why it applies, expected checks, and whether AI, a human, or both are expected to assess it. No repository checks or review agents run at this stage. After approval, the report first shows coverage and items requiring attention, then groups detailed evaluations by quality characteristic. Mechanical, Structural, and Contextual evidence supports the same criterion rather than becoming separate findings.
+
+For example, the final `Review Coverage` may show that retry consistency is `Please Fix`, failure isolation is `AI Verified`, and response compatibility is `Need Review`. For the last item, `Needs Your Attention` names the contract or changed code to inspect, the missing compatibility decision, and the checks AI already completed.
+
+| Criterion | Planned strategy | Completed checks | Coverage |
+|---|---|---|---|
+| Retry consistency | AI | Unit tests, execution-path trace | Please Fix |
+| Failure isolation | AI | Static analysis, error-path review | AI Verified |
+| Response compatibility | AI + Human | Contract review, requirement trace | Need Review |
+
+`Needs Your Attention` then tells the human reviewer which consumer contract to inspect, why the available sources cannot establish compatibility, what decision to make, and which contract checks AI already performed.
 
 #### Summary
 
@@ -157,19 +180,21 @@ codex plugin list
 Then start a new Codex task in the repository you want to review and run:
 
 ```text
-$review-pr
-$review-pr 123
+$review-pr plan
+$review-pr plan 123
+$review-pr run
 ```
 
 Natural-language requests are also supported:
 
 ```text
-Review my local changes
-Review PR 123
-Review this PR: https://github.com/owner/repository/pull/123
+Plan a review of my local changes
+Plan a review of PR 123
+Plan a review of this PR: https://github.com/owner/repository/pull/123
+This plan looks good. Run the review.
 ```
 
-When you specify only a PR number (for example, `$review-pr 123` or `Review PR 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To review a PR in another repository, provide its full GitHub PR URL in a natural-language request.
+When you specify only a PR number (for example, `$review-pr plan 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To plan a PR in another repository, provide its full GitHub PR URL in a natural-language request. A general request to review a PR starts with the planning step; it does not run review agents until you approve the plan.
 
 To refresh the marketplace after updates:
 
@@ -188,8 +213,9 @@ claude --plugin-dir /path/to/review-pr/plugins/review-pr
 Then run:
 
 ```text
-/review-pr
-/review-pr 123
+/review-pr plan
+/review-pr plan 123
+/review-pr run
 ```
 
 ## 4. Requirements
@@ -199,13 +225,15 @@ Then run:
 - Access to the target repository and pull request
 - Repository-defined test or analysis commands for mechanical verification
 
-The review is read-only by default. It does not modify source files, install dependencies, or change repository configuration. A completed PR review can be posted with a Conversation summary and inline details after the user approves the proposed text and locations.
+Planning and review do not modify the target's source files, install dependencies, or change repository configuration. Plans are saved privately in the user's local state directory, outside the target repository. A completed PR review can be posted with a Conversation summary and inline details after the user approves the proposed text and locations.
 
 ## 5. Features
 
 - Developer and Reviewer modes
 - Review-need validation for pull requests
 - Change-specific planning based on ISO/IEC 25010 quality characteristics
+- Separate plan and approved run operations, with snapshot validation before review
+- Planned Review Coverage and criterion-level human handoff
 - Parallel mechanical, structural, and contextual evidence collection
 - Criterion-centric consolidation instead of layer-centric reporting
 - Mechanical checks mapped to the review criteria they materially verify

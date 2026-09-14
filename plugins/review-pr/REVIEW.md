@@ -4,6 +4,14 @@
 
 This document defines the quality characteristics, review concerns, and decision criteria used by the PR review agents. ISO/IEC 25010 is used to check coverage; the actual concerns are concrete questions a human code reviewer would investigate.
 
+The plugin's `REVIEW.md` is the general baseline. A review target may also have
+its own `REVIEW.md` containing team-approved, project-specific concerns. Read
+both when building the plan. Apply a target-specific concern when its stated
+conditions match the change; preserve its source location and any conflict
+with the baseline. Do not treat past PR comments as approved team policy or
+silently add them to `REVIEW.md`. A human must accept or edit a proposed local
+rule before it becomes policy.
+
 Do not apply every concern to every PR. Select concerns dynamically from the purpose, changes, and impact of the review target.
 
 # Review policy
@@ -43,7 +51,8 @@ Use this procedure:
 6. Record why each selected quality characteristic applies, citing concrete change evidence rather than repeating its definition.
 7. Assign one primary review role (`structural` or `contextual`) and any useful supporting roles. Mechanical checks are supporting evidence, not primary review items.
 8. Preserve the selected Category, Subcategory, source criterion, concrete review criterion/question, selection reason, expected checks, and expected evidence in the review plan.
-9. Consolidate all performed checks and evidence by review-plan item and show exactly one final result per review criterion.
+9. Show the selected criteria as Planned Review Coverage and stop for human approval before any three-layer review delegation or repository verification command.
+10. After approval, consolidate all performed checks and evidence by the same review-plan item and show exactly one final result per review criterion. For a deferred human decision, specify why it remains, where to look, what to verify, and what AI already checked.
 
 Use the PR description, linked Issues and acceptance criteria, changed files, callers and callees, established architecture, tests, APIs, databases, events, configuration, and external-service impact.
 

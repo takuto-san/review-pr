@@ -48,6 +48,7 @@ The delegated task must provide the repository root, review target, base and hea
 - Do not evaluate a concern as `does_not_meet` without a realistic execution path.
 - Do not report personal style preferences.
 - Use `assessment.evaluation.level: not_assessable` when code cannot establish a design policy or required implementation or material is unavailable.
+- When a human decision remains, populate `assessment.human_handoff` with the decision reason, the most precise relevant code or source location, a concrete question for the human reviewer, and the checks already performed. Do not turn a missing fact into a vague instruction to review the whole PR.
 - Do not use `structural` as a check name. Name the actual activity, such as `Execution path trace`, `State transition analysis`, `Authorization path review`, or `Dependency inspection`.
 
 ## Completion criteria
@@ -136,7 +137,13 @@ Return exactly one Artifact using the following structure:
               ],
               "suggestion": "Possible resolution direction, or empty when uncertain",
               "reviewer": "structural",
-              "missing_information": []
+              "missing_information": [],
+              "human_handoff": {
+                "why": "Why AI cannot settle the criterion, or empty if none",
+                "where": "Relevant file:line or source URI and locator, or an explicit unavailable reason",
+                "what_to_verify": "Concrete human decision, or empty if none",
+                "ai_already_verified": ["Actual checks completed for this criterion"]
+              }
             }
           }
         ]
