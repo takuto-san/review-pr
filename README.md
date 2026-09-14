@@ -16,14 +16,15 @@ The review has two deliberate steps:
 
 ```text
 review-pr plan [PR number] → inspect target, context, scope, and REVIEW.md
-                           → show Planned Review Coverage → stop
-user approves or edits the plan
-review-pr run              → verify the target has not changed
+                           → show Planned Review Coverage
+                           → request approval in the host UI
+user approves the displayed plan
+                           → verify the target has not changed
                            → run three-layer review
                            → show Review Coverage and Needs Your Attention
 ```
 
-The Plan ID is saved internally. In the same task, `run` or a reply such as “このプランでレビューして” uses the plan just shown; you do not have to type an ID. If several saved plans could apply, Review PR asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
+In Claude Code, Review PR uses native Plan Mode and `ExitPlanMode` to show the coverage for approval or feedback. In Codex, an available structured input prompt offers **Approve and run**, **Do not run**, and **Request changes**. Approval starts the review without another command. The Plan ID is saved internally (in Claude Code, after approval); you can also reply “このプランでレビューして” or use `run`. Feedback produces a revised plan for another decision. If the preferred approval tool is unavailable, Review PR uses an available structured prompt or conversation. If several saved plans could apply, it asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
 
 It supports two modes:
 
@@ -182,7 +183,7 @@ Then start a new Codex task in the repository you want to review and run:
 ```text
 $review-pr plan
 $review-pr plan 123
-$review-pr run
+$review-pr run  # optional: run a previously displayed plan
 ```
 
 Natural-language requests are also supported:
@@ -191,7 +192,7 @@ Natural-language requests are also supported:
 Plan a review of my local changes
 Plan a review of PR 123
 Plan a review of this PR: https://github.com/owner/repository/pull/123
-This plan looks good. Run the review.
+This plan looks good. Run the review.  # optional reply instead of the approval choice
 ```
 
 When you specify only a PR number (for example, `$review-pr plan 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To plan a PR in another repository, provide its full GitHub PR URL in a natural-language request. A general request to review a PR starts with the planning step; it does not run review agents until you approve the plan.

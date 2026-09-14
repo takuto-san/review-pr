@@ -30,7 +30,7 @@
     "defaultPrompt": [
       "Plan a review of my local changes.",
       "Plan a review of PR 123.",
-      "Run the review plan we just agreed on."
+      "Plan a review and let me approve the coverage before it runs."
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/review-pr-icon.png",
