@@ -277,11 +277,11 @@ As the orchestrator, produce the final report directly from the Change Scope res
 
 State that the labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize merge, rejection, or author requests.
 
-Lead with the target, Change Scope, and the Summary count table, then a compact `Review Coverage` table using the same criterion IDs and questions shown in the plan. Show for each criterion its user-facing `No`, checks actually completed, and one status: `AI Verified` for `LGTM`, `AI Checked — Nit` for `Nit`, `Please Fix`, or `Need Review`. Immediately follow it with a `レビュー項目` section using one table per quality characteristic, as in the plan. Each table has `No | 副特性 | レビュー観点 | 実施内容 | 状態 | 根拠`; preserve the plan's question and item number for each row, without a numeric criterion-reference column. Preserve planned item numbers; mark items not performed with the reason, and assign new numbers to unplanned but necessary checks. Every performed check must link to a criterion ID internally when it materially assesses one; keep unrelated commands in internal coverage accounting without fabricating a link. The quality-characteristic tables let the user see which tests and inspections were performed for each planned criterion. Put `Needs Your Attention` after these tables and before the detailed result tables. Include every `Need Review` criterion with columns `Criterion | Why | Where | What to verify | AI already verified`; include `Please Fix` items in a separate compact issue list with their verified location. Human reviewers should be able to identify remaining work without reading every `LGTM` row. Keep the full criterion-level result tables below for audit.
+Lead with the target, Change Scope, and the Summary count table, then a `## レビュー観点` heading and compact table using the same criterion IDs and questions shown in the plan. Its columns are `No | レビュー観点 | 結果`; do not add a review-item-number column. Show the consolidated result for each criterion as one of `Please Fix`, `Need Review`, `Nit`, or `LGTM`; do not imply that `LGTM` is human approval. Immediately follow it with a `## レビュー項目` section using one table per quality characteristic, as in the plan. Each table has `No | 副特性 | レビュー観点 | 実施内容 | ステータス | 理由`; preserve the plan's question and item number for each row, without a numeric criterion-reference column. Preserve planned item numbers; mark items not performed with the reason, and assign new numbers to unplanned but necessary checks. Every performed check must link to a criterion ID internally when it materially assesses one; keep unrelated commands in internal coverage accounting without fabricating a link. The quality-characteristic tables let the user see which tests and inspections were performed for each planned criterion. Put `## 確認・対応が必要な事項` after these tables and before the detailed result tables. Include every `Need Review` criterion with columns `No | 理由 | 確認箇所 | 判断すること | AIが確認済みのこと`, using the same criterion No as the plan; include `Please Fix` items in a separate compact issue list with their verified location and criterion No. Human reviewers should be able to identify remaining work without reading every `LGTM` row. Keep the full criterion-level result tables below for audit.
 
 ### Summary
 
-Show the summary before any criterion evaluation tables. Include counts for all four labels, including zero counts:
+Show the summary before any criterion evaluation tables. Include counts for all four results, including zero counts:
 
 | Label | Count |
 |---|---|
@@ -290,7 +290,7 @@ Show the summary before any criterion evaluation tables. Include counts for all 
 | Nit | 0 |
 | LGTM | 0 |
 
-After the Summary and Review Coverage / Needs Your Attention sections, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
+After the Summary and レビュー観点 / 確認・対応が必要な事項 sections, render a `## Result` heading. Do not show a standalone overall label beneath it. The `## Result` section contains the category-grouped criterion evaluation tables.
 
 Before the first category result table, explain briefly that the quality characteristics are review dimensions selected from `REVIEW.md` according to the actual change, not a list that is applied to every review. Then render a `### Selected Quality Characteristics and Reasons` heading so the table's purpose is clear without relying on surrounding prose, followed by a table with exactly these columns:
 
@@ -308,7 +308,7 @@ Under each category heading, present a table with exactly these columns:
 | Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
 
-When writing the report in Japanese, translate the report headings and table column headers. Use `概要` for `Summary`, `結果` for `Result`, and `品質特性と選んだ理由` for `Selected Quality Characteristics and Reasons`. Use `ラベル | 件数` in the summary, `品質特性 | 選んだ理由` in the selection table, and `評価項目 | レビュー観点 | 確認内容 | 根拠 | 結果` in each criterion table. Keep the four workflow label values (`Please Fix`, `Need Review`, `Nit`, `LGTM`) unchanged so counts and classifications remain unambiguous. Translate the row descriptions and explanations into Japanese as well. For other output languages, use equivalent localized headings and columns; the English names above remain the canonical field mapping.
+When writing the report in Japanese, translate the report headings and table column headers. Use `概要` for `Summary`, `結果` for `Result`, and `品質特性と選んだ理由` for `Selected Quality Characteristics and Reasons`. Use `結果 | 件数` in the summary, `品質特性 | 選んだ理由` in the selection table, and `評価項目 | レビュー観点 | 確認内容 | 理由 | 結果` in each criterion table. Keep the four workflow label values (`Please Fix`, `Need Review`, `Nit`, `LGTM`) unchanged so counts and classifications remain unambiguous. Translate the row descriptions and explanations into Japanese as well. For other output languages, use equivalent localized headings and columns; the English names above remain the canonical field mapping.
 
 Populate the columns as follows:
 

@@ -21,7 +21,7 @@ review-pr [PR number]      → inspect target, context, scope, and REVIEW.md
 user approves the displayed plan
                            → verify the target has not changed
                            → run three-layer review
-                           → show Review Coverage and Needs Your Attention
+                           → show レビュー観点 and 確認・対応が必要な事項
 ```
 
 In Claude Code, Review PR uses native Plan Mode and `ExitPlanMode` to show the coverage for approval or feedback. In Codex, an available structured input prompt offers **Approve and run**, **Do not run**, and **Request changes**. Approval starts the review without another command. The Plan ID is saved internally (in Claude Code, after approval); you can also reply “このプランでレビューして”. Feedback produces a revised plan for another decision. If the preferred approval tool is unavailable, Review PR uses an available structured prompt or conversation. If several saved plans could apply, it asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
@@ -69,78 +69,84 @@ For example, a plan for a payment retry change could show (all paths and counts 
 |---|---|---|---|---|---|
 | 3 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 旧フィールドを参照する利用側が新しい応答で失敗しないか | `src/payment-client.ts`の応答参照、決済APIの応答契約 | 変更前後のフィールド名と利用側の参照箇所を照合する |
 
-For example, the final `Review Coverage` may show that retry consistency is `Please Fix`, failure isolation is `AI Verified`, and response compatibility is `Need Review`. For the last item, `Needs Your Attention` names the contract or changed code to inspect, the missing compatibility decision, and the checks AI already completed.
+For example, the final `レビュー観点` table uses the same criterion No as the plan. The review-item results are shown separately by quality characteristic. `確認・対応が必要な事項` appears only after the evidence has been evaluated.
 
-| No | レビュー観点 | 実施したレビュー項目No | 判定 |
-|---|---|---|---|
-| 1 | 再試行で二重決済しないか | 1, 2 | Please Fix |
-| 2 | 既存クライアントと互換か | 3 | Need Review |
+#### 概要
 
-**レビュー項目（実施結果）**
-
-**信頼性**
-
-| No | 副特性 | レビュー観点 | 実施内容 | 状態 | 根拠 |
-|---|---|---|---|---|---|
-| 1 | 回復性 | 通知失敗後の再試行で二重決済しないか | 通知失敗時の再試行テスト | 実施 | 通知失敗後に決済が再実行された |
-| 2 | 回復性 | 通知失敗後の再試行で二重決済しないか | 決済状態の遷移確認 | 実施 | 決済成功後の状態が保持されない |
-
-**互換性**
-
-| No | 副特性 | レビュー観点 | 実施内容 | 状態 | 根拠 |
-|---|---|---|---|---|---|
-| 3 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 応答フィールドと利用箇所の照合 | 実施 | 互換性方針は資料から確認できなかった |
-
-`Needs Your Attention` then tells the human reviewer which consumer contract to inspect, why the available sources cannot establish compatibility, what decision to make, and which contract checks AI already performed.
-
-#### Summary
-
-| Label | Count |
+| 結果 | 件数 |
 |---|---:|
 | Please Fix | 1 |
 | Need Review | 1 |
 | Nit | 0 |
-| LGTM | 1 |
+| LGTM | 0 |
 
-#### Result
+#### レビュー観点
+
+| No | レビュー観点 | 結果 |
+|---|---|---|
+| 1 | 通知失敗後の再試行で二重決済しないか | Please Fix |
+| 2 | 新しい応答形式を既存クライアントが扱えるか | Need Review |
+
+#### レビュー項目
+
+**信頼性**
+
+| No | 副特性 | レビュー観点 | 実施内容 | ステータス | 理由 |
+|---|---|---|---|---|---|
+| 1 | 回復性 | 通知失敗後の再試行で二重決済しないか | 通知失敗時の再試行テスト | 実施 | 決済APIが2回呼ばれた |
+| 2 | 回復性 | 通知失敗後の再試行で二重決済しないか | 決済状態の遷移確認 | 実施 | `src/payment.ts:84`から確定済み決済の再実行経路に入る |
+
+**互換性**
+
+| No | 副特性 | レビュー観点 | 実施内容 | ステータス | 理由 |
+|---|---|---|---|---|---|
+| 3 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 応答フィールドと利用箇所の照合 | 実施 | 外部クライアントの契約が資料にない |
+
+#### 確認・対応が必要な事項
+
+| No | 理由 | 確認箇所 | 判断すること | AIが確認済みのこと |
+|---|---|---|---|---|
+| 2 | 外部クライアントの契約が不明 | 決済APIの応答仕様と利用側の契約 | 旧フィールドを維持する必要があるか | リポジトリ内の参照箇所と変更前後の応答を照合 |
+
+`Please Fix` items appear in a separate short list with the verified changed-code location. The detailed result tables follow.
+
+#### 結果
 
 The quality characteristics below are selected for this change from the review criteria in `plugins/review-pr/REVIEW.md`; they are not applied indiscriminately to every review.
 
-##### Selected Quality Characteristics and Reasons
+##### 品質特性と選んだ理由
 
-| Quality Characteristic | Reason |
+| 品質特性 | 選んだ理由 |
 |---|---|
-| Reliability | `src/payment.ts` changes retry and failure handling around a state-changing payment operation. |
-| Compatibility | The response schema changes a public contract consumed outside the modified component. |
+| 信頼性 | `src/payment.ts`で決済後の再試行経路が変わるため。 |
+| 互換性 | 公開APIの応答フィールドが変わるため。 |
 
-##### Reliability
+##### 信頼性
 
-| Subcategory | Review Criterion | Checks | Evidence | Result |
+| 評価項目 | レビュー観点 | 確認内容 | 理由 | 結果 |
 |---|---|---|---|---|
-| Recoverability | Can a retry after notification failure duplicate a payment? | Unit tests<br>Execution-path trace | Retry tests pass for network errors, but `src/payment.ts:84` repeats the charge after a successful charge followed by a notification failure. | Please Fix |
-| Fault tolerance | Is a temporary dependency failure contained and bounded? | Static analysis<br>Error-path review | The client applies a timeout and a bounded retry policy in `src/client.ts:72`; the relevant automated checks pass. | LGTM |
+| 回復性 | 通知失敗後の再試行で二重決済しないか | 再試行テスト<br>実行経路の追跡 | `src/payment.ts:84`から確定済み決済の再実行経路に入り、決済APIが2回呼ばれた。 | Please Fix |
 
 The `Please Fix` finding is also displayed inline at the verified changed line in `src/payment.ts:84`, with the relevant code line and explanation.
 
-##### Compatibility
+##### 互換性
 
-| Subcategory | Review Criterion | Checks | Evidence | Result |
+| 評価項目 | レビュー観点 | 確認内容 | 理由 | 結果 |
 |---|---|---|---|---|
-| Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Need Review |
+| 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 応答フィールドと利用箇所の照合 | 外部クライアントの契約が資料になく、互換性を判定できない。 | Need Review |
 
 The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
 
-When the report is written in Japanese, its criterion table uses `評価項目 | レビュー観点 | 確認内容 | 根拠 | 結果` as column headings. The label values remain `Please Fix`, `Need Review`, `Nit`, and `LGTM`.
+When the report is written in Japanese, its criterion table uses `評価項目 | レビュー観点 | 確認内容 | 理由 | 結果` as column headings. The label values remain `Please Fix`, `Need Review`, `Nit`, and `LGTM`.
 
 After displaying a completed Reviewer-mode report, Review PR proposes a Conversation comment with a Markdown Summary table and an index of every AI-selected quality characteristic, review item, and review criterion. Detailed results appear as inline comments on verified changed-code lines; details without a valid inline location remain in Conversation with the reason stated. Review PR shows every proposed comment and location, asks before posting, and verifies that the PR head and inline locations have not changed. Developer-mode and incomplete reviews do not prompt for posting.
 
 For a Japanese review, the Conversation comment uses `品質特性と選んだ理由` above the `品質特性 | 選んだ理由` table and `レビュー観点と結果` above the following index. For the example above, that index would include:
 
-| Quality Characteristic | Review Item | Review Criterion | Result |
+| 品質特性 | 評価項目 | レビュー観点 | 結果 |
 |---|---|---|---|
-| Reliability | Recoverability | Can a retry after notification failure duplicate a payment? | Please Fix |
-| Reliability | Fault tolerance | Is a temporary dependency failure contained and bounded? | LGTM |
-| Compatibility | Interoperability | Does the response-schema change preserve existing consumers? | Need Review |
+| 信頼性 | 回復性 | 通知失敗後の再試行で二重決済しないか | Please Fix |
+| 互換性 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | Need Review |
 
 ## 2. Architecture
 
