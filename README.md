@@ -48,6 +48,8 @@ The quality characteristics below are selected for this change from the review c
 | Recoverability | Can a retry after notification failure duplicate a payment? | Unit tests<br>Execution-path trace | Retry tests pass for network errors, but `src/payment.ts:84` repeats the charge after a successful charge followed by a notification failure. | Please Fix |
 | Fault tolerance | Is a temporary dependency failure contained and bounded? | Static analysis<br>Error-path review | The client applies a timeout and a bounded retry policy in `src/client.ts:72`; the relevant automated checks pass. | LGTM |
 
+The `Please Fix` finding is also displayed inline at the verified changed line in `src/payment.ts:84`, with the relevant code line and explanation.
+
 ##### Compatibility
 
 | Subcategory | Review Criterion | Checks | Evidence | Result |
@@ -55,6 +57,10 @@ The quality characteristics below are selected for this change from the review c
 | Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Need Review |
 
 The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
+
+When the report is written in Japanese, its criterion table uses `評価項目 | レビュー観点 | 確認内容 | 根拠 | 評価結果` as column headings. The label values remain `Please Fix`, `Need Review`, `Nit`, and `LGTM`.
+
+After displaying a completed Reviewer-mode report, Review PR shows the proposed top-level comment and each `Please Fix` inline comment, then asks whether to post them. It posts only after approval and verifies that the PR head and inline locations have not changed since the review. Developer-mode and incomplete reviews do not prompt for posting.
 
 ## 2. Architecture
 
@@ -185,7 +191,7 @@ Then run:
 - Access to the target repository and pull request
 - Repository-defined test or analysis commands for mechanical verification
 
-The review is read-only by default. It does not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests a separate action.
+The review is read-only by default. It does not modify source files, install dependencies, or change repository configuration. A completed PR review can be posted as a top-level comment with `Please Fix` findings on the relevant changed lines after the user approves the proposed text and locations.
 
 ## 5. Features
 

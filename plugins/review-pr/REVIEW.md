@@ -179,7 +179,7 @@ A potential problem must include:
 1. A concise conclusion
 2. A concrete trigger and execution path
 3. The affected quality characteristic and concern
-4. Supporting changed-code locations
+4. A verified changed-code line for inline display when one exists, selected from the code evidence rather than a test or specification reference
 5. Observable impact
 6. What the reviewer should confirm
 
@@ -187,7 +187,7 @@ Explain what is wrong, why it matters, when it occurs, and a feasible resolution
 
 # Output format
 
-Follow [the final-report procedure](skills/review-pr/SKILL.md). Present the two-column Summary table first and include counts for all four labels, including zero counts. Before the quality-characteristic result tables, explain that the characteristics are change-specific review dimensions and show a `Selected Quality Characteristics and Reasons` heading followed by one `Quality Characteristic | Reason` row for every selected characteristic using concrete change evidence. Group result tables by quality characteristic and label the first table column `Subcategory`. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
+Follow [the final-report procedure](skills/review-pr/SKILL.md). Present the two-column Summary table first and include counts for all four labels, including zero counts. Before the quality-characteristic result tables, explain that the characteristics are change-specific review dimensions and show a `Selected Quality Characteristics and Reasons` heading followed by one `Quality Characteristic | Reason` row for every selected characteristic using concrete change evidence. Group result tables by quality characteristic and label the first table column `Subcategory`. Localize those headings and column titles to the report language; in Japanese, use `レビュー観点`, `根拠`, and `評価結果` for `Review Criterion`, `Evidence`, and `Result`. Display each `Please Fix` finding inline at its verified changed-code line when possible. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
 
 # Do not report
 

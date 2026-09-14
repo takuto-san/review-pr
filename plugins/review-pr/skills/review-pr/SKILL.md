@@ -20,7 +20,7 @@ Use the logical role names `mechanical`, `structural`, and `contextual` below. T
 
 Run independent eligible roles concurrently when the runtime supports parallel delegation. If no subagent facility is available, record the affected review criteria as `Need Review` and stop the review as incomplete. Delegated review work is mandatory after validation passes: the orchestrator must run at least one eligible review agent and must not replace an agent by using Read, Bash, grep, or equivalent tools to perform that agent's review itself. The orchestrator may use those tools only for its explicitly assigned orchestration duties, including target resolution, eligibility, context collection, planning, consolidation, and the evidence checks required below.
 
-The review is read-only. Do not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests it.
+The review is read-only until the user explicitly asks to post a GitHub comment or approves the posting prompt in step 9. Do not modify source files, install dependencies, or change repository configuration as part of a review.
 
 Detailed review criteria are defined in `REVIEW.md`. Detailed responsibilities and output schemas are defined by the agents under `agents/`.
 
@@ -286,6 +286,8 @@ Under each category heading, present a table with exactly these columns:
 | Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
 
+When writing the report in Japanese, translate the report headings and table column headers. Use `概要` for `Summary`, `結果` for `Result`, and `選択した品質特性と選定理由` for `Selected Quality Characteristics and Reasons`. Use `ラベル | 件数` in the summary, `品質特性 | 選定理由` in the selection table, and `評価項目 | レビュー観点 | 確認内容 | 根拠 | 評価結果` in each criterion table. Keep the four workflow label values (`Please Fix`, `Need Review`, `Nit`, `LGTM`) unchanged so counts and classifications remain unambiguous. Translate the row descriptions and explanations into Japanese as well. For other output languages, use equivalent localized headings and columns; the English names above remain the canonical field mapping.
+
 Populate the columns as follows:
 
 - Category heading: `rubric.category`
@@ -297,6 +299,8 @@ Populate the columns as follows:
 
 Include exactly one row per review-plan criterion under its category heading. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
 
+For each `Please Fix` result, select the specific changed code line that demonstrates the confirmed defect from its `evidence.path` entries. Verify the file and line against the reviewed head and diff; an evidence entry may instead refer to a test, specification, or supporting code and must not automatically become the target. Include the exact relevant code line and a concise explanation next to that result. In Codex, also emit a `::code-comment` attached to the verified line so the finding appears inline. Keep the table row for count and criterion coverage. Do not invent a line or attach a finding to unrelated code. If no changed line supports an inline location, state that limitation in the result and show the file or source reference in Evidence.
+
 When several checks or evidence entries apply to one criterion, separate them with `<br>` or semicolons while keeping the table readable.
 
 Preserve concrete evidence and missing-information details, but do not expose intermediate Artifact data, internal role routing, rejected candidates, or private reasoning.
@@ -306,3 +310,9 @@ Preserve concrete evidence and missing-information details, but do not expose in
 Present the review as complete only when the target was resolved unambiguously, review and agent eligibility was confirmed, required context was collected or its limitations were recorded, Change Scope was evaluated, the review plan was generated from `REVIEW.md`, every selected quality characteristic has a concrete change-backed selection reason in the final report, all applicable review criteria were evaluated, applicable static analysis and Unit tests ran or have justified limitations, every review-plan `criterion_id` was consolidated exactly once, and every `Please Fix` candidate received a targeted evidence check.
 
 If any requirement is missing, clearly mark the review as incomplete and state the reason.
+
+## 9. Offer to post the completed PR review
+
+In Reviewer mode, after displaying a complete final report to the user, ask whether to post the review on the PR. Show the exact top-level summary text and each proposed `Please Fix` inline comment with its file and changed line so the user can review all posts. Put `Please Fix` findings on their verified changed lines as PR review comments; put the summary and other results in one top-level PR comment. Do not duplicate full `Please Fix` findings in the top-level comment. If a `Please Fix` finding has no valid changed-line anchor, include it in the top-level comment with its location limitation instead. Do not post while asking or assume approval from silence. This prompt does not apply in Developer mode, when review eligibility caused a skip, or when the review is incomplete.
+
+If the user approves, verify that the PR number, repository, head SHA, and inline diff positions still match the reviewed target before posting. If the head changed, explain that the report is stale and do not post it. If they still match, publish the approved top-level text and inline comments once through the GitHub review API or equivalent tool, then report their URLs. If the user declines, leave the PR unchanged. A user request that already explicitly authorizes posting the completed review does not need a second confirmation, but the report must still be complete and the target verified before posting.
