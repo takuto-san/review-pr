@@ -155,6 +155,8 @@ Review PR 123
 Review this PR: https://github.com/owner/repository/pull/123
 ```
 
+When you specify only a PR number (for example, `$review-pr 123` or `Review PR 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To review a PR in another repository, provide its full GitHub PR URL in a natural-language request.
+
 To refresh the marketplace after updates:
 
 ```bash
