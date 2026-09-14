@@ -18,7 +18,7 @@ This skill supports both Claude Code and Codex. Use the runtime's native subagen
 
 Use the logical role names `mechanical`, `structural`, and `contextual` below. These roles are internal evidence providers. The final report is organized by review criterion, not by role.
 
-Run independent eligible roles concurrently when the runtime supports parallel delegation. If no subagent facility is available, record the affected review criteria as `Unable to Verify` and stop the review as incomplete. Delegated review work is mandatory after validation passes: the orchestrator must run at least one eligible review agent and must not replace an agent by using Read, Bash, grep, or equivalent tools to perform that agent's review itself. The orchestrator may use those tools only for its explicitly assigned orchestration duties, including target resolution, eligibility, context collection, planning, consolidation, and the evidence checks required below.
+Run independent eligible roles concurrently when the runtime supports parallel delegation. If no subagent facility is available, record the affected review criteria as `Need Review` and stop the review as incomplete. Delegated review work is mandatory after validation passes: the orchestrator must run at least one eligible review agent and must not replace an agent by using Read, Bash, grep, or equivalent tools to perform that agent's review itself. The orchestrator may use those tools only for its explicitly assigned orchestration duties, including target resolution, eligibility, context collection, planning, consolidation, and the evidence checks required below.
 
 The review is read-only. Do not modify source files, install dependencies, change repository configuration, or post GitHub comments unless the user explicitly requests it.
 
@@ -176,13 +176,13 @@ Do not add generic review criteria merely for completeness.
 
 Package the completed review plan as an A2A-compatible Artifact named `review.plan` with `metadata.schema: review/plan` before delegating structural and contextual work.
 
-Every delegated structural and contextual reviewer must return exactly one result for every criterion assigned to it and preserve the criterion's `criterion_id`. Criteria assigned to an unavailable reviewer are recorded as `Unable to Verify`. Each result contains `assessment.evaluation`; missing evidence must produce `assessment.evaluation.level: not_assessable` rather than omission.
+Every delegated structural and contextual reviewer must return exactly one result for every criterion assigned to it and preserve the criterion's `criterion_id`. Criteria assigned to an unavailable reviewer are recorded as `Need Review` with the missing prerequisite. Each result contains `assessment.evaluation`; missing evidence must produce `assessment.evaluation.level: not_assessable` rather than omission.
 
 ## 6. Run the review roles
 
 After the review plan is complete, apply the agent eligibility procedure in `skills/review-pr/checks/eligibility.md` to `structural` and `contextual`.
 
-Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable `criterion_id` values as `Unable to Verify` with the concrete reason.
+Check each agent's definition, tools, required inputs, and assigned review-plan criteria without running a review. Do not delegate an agent with no assigned criteria or missing prerequisites. Preserve unavailable `criterion_id` values as `Need Review` with the concrete reason.
 
 Run eligible roles in parallel while any already-started mechanical checks continue. Use these role definitions:
 
@@ -217,7 +217,7 @@ Executed commands that do not materially verify a selected review criterion must
 
 ## 7. Consolidate the review results
 
-Wait for the early mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable criterion IDs as incomplete reasons and `Unable to Verify` evidence where applicable.
+Wait for the early mechanical task and all structural/contextual batches to finish. Include roles that were not delegated because of eligibility in coverage accounting. Preserve task failures, unavailable checks, and unavailable criterion IDs as incomplete reasons. For affected criteria, use `Need Review` and state the missing evidence.
 
 The orchestrator then consolidates the complete `review.mechanical`, `review.structural`, and `review.contextual` Artifacts directly. Do not delegate this consolidation step.
 
@@ -245,11 +245,11 @@ Use these labels:
 - `fully_meets` normally maps to `LGTM`.
 - `mostly_meets` normally maps to `Nit`; use `Need Review` when a concrete human decision is required.
 - `partially_meets` and `does_not_meet` are candidates for `Please Fix`. Before assigning that label, inspect the cited changed code and confirm a realistic trigger-to-impact path. For contextual results, also confirm the cited requirement or acceptance criterion and its implementation location. Use `Need Review` for product, design, or specification decisions.
-- `not_assessable` maps to `Unable to Verify` and preserves missing information.
+- `not_assessable` maps to `Need Review`; state the missing information in the evidence.
 
-Mechanical evidence modifies the evidence available for a criterion; it does not independently determine the final label merely because a command passed or failed. A passing mechanical check supports only the criterion scope it actually verifies. A failed command contributes `Please Fix` evidence only when its observed output demonstrates a defect introduced or exposed by the change; environment and execution failures contribute `Unable to Verify` evidence.
+Mechanical evidence modifies the evidence available for a criterion; it does not independently determine the final label merely because a command passed or failed. A passing mechanical check supports only the criterion scope it actually verifies. A failed command contributes `Please Fix` evidence only when its observed output demonstrates a defect introduced or exposed by the change; environment and execution failures leave affected criteria at `Need Review` with the failure reason recorded.
 
-Do not re-review `LGTM` or `Nit` results. If a `Please Fix` candidate is not supported after the targeted check, reject it when it is inapplicable or pre-existing; otherwise classify it as `Unable to Verify` with the missing evidence.
+Do not re-review `LGTM` or `Nit` results. If a `Please Fix` candidate is not supported after the targeted check, reject it when it is inapplicable or pre-existing; otherwise classify it as `Need Review` with the missing evidence.
 
 ## 8. Produce the final report
 
@@ -259,13 +259,12 @@ State that the labels and suggested fixes are advisory triage candidates for hum
 
 ### Summary
 
-Show the summary before any criterion evaluation tables. Include counts for all five labels, including zero counts:
+Show the summary before any criterion evaluation tables. Include counts for all four labels, including zero counts:
 
 | Label | Count |
 |---|---|
 | Please Fix | 0 |
 | Need Review | 0 |
-| Unable to Verify | 0 |
 | Nit | 0 |
 | LGTM | 0 |
 
@@ -294,7 +293,7 @@ Populate the columns as follows:
 - `Review Criterion`: the concrete PR-specific `rubric.question`
 - `Checks`: concise list of verification activities actually performed for the criterion
 - `Evidence`: concise concrete observations, code/source locations, command outcomes, or missing-information details
-- `Result`: one of `Nit`, `LGTM`, `Please Fix`, `Need Review`, or `Unable to Verify`
+- `Result`: one of `Nit`, `LGTM`, `Please Fix`, `Need Review`
 
 Include exactly one row per review-plan criterion under its category heading. Do not create separate rows for Mechanical, Structural, or Contextual roles, and do not create standalone rows for executed commands.
 

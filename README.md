@@ -26,8 +26,7 @@ Review PR first summarizes the labels, then groups the evaluated review criteria
 | Label | Count |
 |---|---:|
 | Please Fix | 1 |
-| Need Review | 0 |
-| Unable to Verify | 1 |
+| Need Review | 1 |
 | Nit | 0 |
 | LGTM | 1 |
 
@@ -53,7 +52,7 @@ The quality characteristics below are selected for this change from the review c
 
 | Subcategory | Review Criterion | Checks | Evidence | Result |
 |---|---|---|---|---|
-| Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Unable to Verify |
+| Interoperability | Does the response-schema change preserve existing consumers? | Contract review<br>Requirement trace | The changed response shape is visible in the diff, but no compatibility policy or consumer contract was available. | Need Review |
 
 The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
 

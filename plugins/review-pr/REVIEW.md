@@ -14,7 +14,7 @@ Do not apply every concern to every PR. Select concerns dynamically from the pur
 - Report a problem only with a concrete code location and realistic failure path.
 - Do not assert a problem when evidence is insufficient.
 - Classify product, design, or specification choices as `Need Review`.
-- Classify unavailable information or execution evidence as `Unable to Verify`.
+- Classify criteria that require missing information or execution evidence as `Need Review`, and identify the missing evidence.
 - Normally omit formatting, lint, and simple type errors already detected by CI.
 - Do not block a PR for personal style preferences.
 - Report a pre-existing problem only when this change materially expands its impact.
@@ -164,13 +164,13 @@ Use the following four conformance levels plus a separate `not_assessable` state
 | `does_not_meet` | A realistic path demonstrates that the concern is materially violated; any existing protection is insufficient for the identified impact. |
 | `not_assessable` | The available specifications, implementation, tests, measurements, permissions, or environment evidence are insufficient to assess conformance. |
 
-The first four levels measure conformance with a review concern; `not_assessable` records that conformance cannot be judged from the available evidence. The scale does not express the action requested from a human. Pair `not_assessable` with `Unable to Verify`, and classify assessable results separately according to the result classifications below.
+The first four levels measure conformance with a review concern; `not_assessable` records that conformance cannot be judged from the available evidence. The scale does not express the action requested from a human. Pair `not_assessable` with `Need Review` and state what evidence is missing; classify assessable results separately according to the result classifications below.
 
 ## Workflow labels
 
-Use `Please Fix`, `Need Review`, `Nit`, `LGTM`, or `Unable to Verify`. `fully_meets` normally maps to `LGTM`; `mostly_meets` normally maps to `Nit`, or `Need Review` when a human decision is required. `partially_meets` and `does_not_meet` map to `Please Fix` only after the orchestrator confirms a concrete defect or requirement violation and its realistic impact path. Product, design, and specification decisions map to `Need Review`. `not_assessable` always maps to `Unable to Verify`.
+Use `Please Fix`, `Need Review`, `Nit`, or `LGTM`. `fully_meets` normally maps to `LGTM`; `mostly_meets` normally maps to `Nit`, or `Need Review` when a human decision is required. `partially_meets` and `does_not_meet` map to `Please Fix` only after the orchestrator confirms a concrete defect or requirement violation and its realistic impact path. Product, design, and specification decisions map to `Need Review`. `not_assessable` maps to `Need Review` with the missing evidence stated explicitly.
 
-Do not add inapplicable concerns to the plan. If an assigned item is found inapplicable during consolidation, retain its ID and rejection reason internally rather than silently dropping it or inventing a sixth label.
+Do not add inapplicable concerns to the plan. If an assigned item is found inapplicable during consolidation, retain its ID and rejection reason internally rather than silently dropping it or inventing another label.
 
 # Writing findings
 
@@ -187,7 +187,7 @@ Explain what is wrong, why it matters, when it occurs, and a feasible resolution
 
 # Output format
 
-Follow [the final-report procedure](skills/review-pr/SKILL.md). Present the two-column Summary table first and include counts for all five labels, including zero counts. Before the quality-characteristic result tables, explain that the characteristics are change-specific review dimensions and show a `Selected Quality Characteristics and Reasons` heading followed by one `Quality Characteristic | Reason` row for every selected characteristic using concrete change evidence. Group result tables by quality characteristic and label the first table column `Subcategory`. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
+Follow [the final-report procedure](skills/review-pr/SKILL.md). Present the two-column Summary table first and include counts for all four labels, including zero counts. Before the quality-characteristic result tables, explain that the characteristics are change-specific review dimensions and show a `Selected Quality Characteristics and Reasons` heading followed by one `Quality Characteristic | Reason` row for every selected characteristic using concrete change evidence. Group result tables by quality characteristic and label the first table column `Subcategory`. Preserve evidence, missing information, and incomplete-review reasons. State that the results are advisory candidates for human review. Do not add new concerns during formatting.
 
 # Do not report
 

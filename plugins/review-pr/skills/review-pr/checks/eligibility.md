@@ -66,7 +66,7 @@ For every agent:
 5. Set `unavailable` when applicable work exists but a required input, tool,
    permission, runtime, dependency, configuration value, or service is missing.
    Record the affected checks or review-plan criterion IDs so they can be reported as
-   `Unable to Verify`.
+   `Need Review` with the missing prerequisite stated explicitly.
 6. Set `ready` only when the agent can start with all applicable work. Use
    `partial` only for `mechanical` when at least one applicable command can run
    and at least one cannot; start it with the runnable commands and record the
