@@ -58,9 +58,17 @@ The `Please Fix` finding is also displayed inline at the verified changed line i
 
 The labels and suggested fixes are advisory triage candidates for human review; they do not automatically authorize a merge, rejection, or change request.
 
-When the report is written in Japanese, its criterion table uses `評価項目 | レビュー観点 | 確認内容 | 根拠 | 評価結果` as column headings. The label values remain `Please Fix`, `Need Review`, `Nit`, and `LGTM`.
+When the report is written in Japanese, its criterion table uses `評価項目 | レビュー観点 | 確認内容 | 根拠 | 結果` as column headings. The label values remain `Please Fix`, `Need Review`, `Nit`, and `LGTM`.
 
-After displaying a completed Reviewer-mode report, Review PR shows the proposed top-level comment and each `Please Fix` inline comment, then asks whether to post them. It posts only after approval and verifies that the PR head and inline locations have not changed since the review. Developer-mode and incomplete reviews do not prompt for posting.
+After displaying a completed Reviewer-mode report, Review PR proposes a Conversation comment with a Markdown Summary table and an index of every AI-selected quality characteristic, review item, and review criterion. Detailed results appear as inline comments on verified changed-code lines; details without a valid inline location remain in Conversation with the reason stated. Review PR shows every proposed comment and location, asks before posting, and verifies that the PR head and inline locations have not changed. Developer-mode and incomplete reviews do not prompt for posting.
+
+For a Japanese review, the Conversation comment uses `品質特性と選んだ理由` above the `品質特性 | 選んだ理由` table and `レビュー観点と結果` above the following index. For the example above, that index would include:
+
+| Quality Characteristic | Review Item | Review Criterion | Result |
+|---|---|---|---|
+| Reliability | Recoverability | Can a retry after notification failure duplicate a payment? | Please Fix |
+| Reliability | Fault tolerance | Is a temporary dependency failure contained and bounded? | LGTM |
+| Compatibility | Interoperability | Does the response-schema change preserve existing consumers? | Need Review |
 
 ## 2. Architecture
 
@@ -191,7 +199,7 @@ Then run:
 - Access to the target repository and pull request
 - Repository-defined test or analysis commands for mechanical verification
 
-The review is read-only by default. It does not modify source files, install dependencies, or change repository configuration. A completed PR review can be posted as a top-level comment with `Please Fix` findings on the relevant changed lines after the user approves the proposed text and locations.
+The review is read-only by default. It does not modify source files, install dependencies, or change repository configuration. A completed PR review can be posted with a Conversation summary and inline details after the user approves the proposed text and locations.
 
 ## 5. Features
 
