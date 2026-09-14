@@ -10,12 +10,12 @@ this repository's Codex marketplace manifest.
 
 ## 1. Overview
 
-Review PR separates planning from review. It first gathers context and shows the change-specific criteria as Planned Review Coverage. After you approve that plan, it collects mechanical, structural, and contextual evidence and updates the same criteria with what AI verified, what needs a fix, and what needs human judgment.
+Review PR separates planning from review. It first gathers context, shows rubric-derived review criteria, and lists planned tests and inspections in a separate table linked by criterion ID. After you approve that plan, it collects mechanical, structural, and contextual evidence and reports which review items ran, what AI verified, what needs a fix, and what still needs human judgment.
 
 The review has two deliberate steps:
 
 ```text
-review-pr plan [PR number] → inspect target, context, scope, and REVIEW.md
+review-pr [PR number]      → inspect target, context, scope, and REVIEW.md
                            → show Planned Review Coverage
                            → request approval in the host UI
 user approves the displayed plan
@@ -24,7 +24,7 @@ user approves the displayed plan
                            → show Review Coverage and Needs Your Attention
 ```
 
-In Claude Code, Review PR uses native Plan Mode and `ExitPlanMode` to show the coverage for approval or feedback. In Codex, an available structured input prompt offers **Approve and run**, **Do not run**, and **Request changes**. Approval starts the review without another command. The Plan ID is saved internally (in Claude Code, after approval); you can also reply “このプランでレビューして” or use `run`. Feedback produces a revised plan for another decision. If the preferred approval tool is unavailable, Review PR uses an available structured prompt or conversation. If several saved plans could apply, it asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
+In Claude Code, Review PR uses native Plan Mode and `ExitPlanMode` to show the coverage for approval or feedback. In Codex, an available structured input prompt offers **Approve and run**, **Do not run**, and **Request changes**. Approval starts the review without another command. The Plan ID is saved internally (in Claude Code, after approval); you can also reply “このプランでレビューして”. Feedback produces a revised plan for another decision. If the preferred approval tool is unavailable, Review PR uses an available structured prompt or conversation. If several saved plans could apply, it asks which target and creation time you mean. If a PR head or local diff changed after planning, create a new plan before running.
 
 It supports two modes:
 
@@ -33,15 +33,63 @@ It supports two modes:
 
 ### Example review output
 
-At planning time, Review PR shows each selected criterion, its source, why it applies, expected checks, and whether AI, a human, or both are expected to assess it. No repository checks or review agents run at this stage. After approval, the report first shows coverage and items requiring attention, then groups detailed evaluations by quality characteristic. Mechanical, Structural, and Contextual evidence supports the same criterion rather than becoming separate findings.
+At planning time, Review PR opens with the exact PR title and four short bullets: `概要` explains the source-backed purpose; `変更範囲` shows `適切` or `要注意`; `変更内容` gives the diff size and uses indented sub-bullets for repository-relative paths when needed; `確認すること` names the behaviors or contracts the review will check. It then shows a `レビュー観点` table derived from applicable `REVIEW.md` concerns. Under `レビュー項目`, one table is shown per quality characteristic; each item has `No | 副特性 | レビュー観点 | 確認内容 | 該当箇所 | 確認方法`. `該当箇所` identifies a file and a specific function, branch, test case, or contract section. `確認方法` says how to check it and what result to observe. The `レビュー観点` column gives users the item-to-criterion relationship without an extra numeric reference column. No repository checks or review agents run during planning, and the plan does not predict which decisions AI will defer to a human.
+
+For example, a plan for a payment retry change could show (all paths and counts are illustrative):
+
+### PR #123：決済後の通知失敗時の再試行を修正
+
+- **概要：** 決済成功後に通知が失敗したときの再試行処理と、決済APIの応答形式を変更する。
+- **変更範囲：** 適切
+- **変更内容：** 4ファイルを変更（+86行、−24行）。
+  - `src/payment.ts`：決済確定後の通知失敗・再試行処理。
+  - `src/payment-api.ts`：決済結果の応答フィールド。
+  - `tests/payment-retry.test.ts`、`tests/payment-api.test.ts`：関連ケースを更新。
+- **確認すること：** 部分失敗後の二重決済防止と、既存クライアントとの応答互換性を確認する。
+
+#### レビュー観点
+
+| No | 品質特性 | 副特性 | レビュー観点 | 理由 |
+|---|---|---|---|---|
+| 1 | 信頼性 | 回復性 | 通知失敗後の再試行で二重決済しないか | 決済確定後の失敗経路が変更された |
+| 2 | 互換性 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 公開APIの応答フィールドが変更された |
+
+#### レビュー項目
+
+**信頼性**
+
+| No | 副特性 | レビュー観点 | 確認内容 | 該当箇所 | 確認方法 |
+|---|---|---|---|---|---|
+| 1 | 回復性 | 通知失敗後の再試行で二重決済しないか | 決済成功後に通知が失敗しても、再試行で決済APIが再呼び出しされないか | `src/payment.ts`の通知失敗・再試行分岐、`tests/payment-retry.test.ts`の該当ケース | 通知失敗を発生させ、決済APIの呼び出しが1回のままか確認する |
+| 2 | 回復性 | 通知失敗後の再試行で二重決済しないか | 部分失敗後も決済成功状態が保持されるか | `src/payment.ts`の決済状態保存処理 | 決済確定から再試行までの状態遷移を追い、成功状態が上書きされないか確認する |
+
+**互換性**
+
+| No | 副特性 | レビュー観点 | 確認内容 | 該当箇所 | 確認方法 |
+|---|---|---|---|---|---|
+| 3 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 旧フィールドを参照する利用側が新しい応答で失敗しないか | `src/payment-client.ts`の応答参照、決済APIの応答契約 | 変更前後のフィールド名と利用側の参照箇所を照合する |
 
 For example, the final `Review Coverage` may show that retry consistency is `Please Fix`, failure isolation is `AI Verified`, and response compatibility is `Need Review`. For the last item, `Needs Your Attention` names the contract or changed code to inspect, the missing compatibility decision, and the checks AI already completed.
 
-| Criterion | Planned strategy | Completed checks | Coverage |
+| No | レビュー観点 | 実施したレビュー項目No | 判定 |
 |---|---|---|---|
-| Retry consistency | AI | Unit tests, execution-path trace | Please Fix |
-| Failure isolation | AI | Static analysis, error-path review | AI Verified |
-| Response compatibility | AI + Human | Contract review, requirement trace | Need Review |
+| 1 | 再試行で二重決済しないか | 1, 2 | Please Fix |
+| 2 | 既存クライアントと互換か | 3 | Need Review |
+
+**レビュー項目（実施結果）**
+
+**信頼性**
+
+| No | 副特性 | レビュー観点 | 実施内容 | 状態 | 根拠 |
+|---|---|---|---|---|---|
+| 1 | 回復性 | 通知失敗後の再試行で二重決済しないか | 通知失敗時の再試行テスト | 実施 | 通知失敗後に決済が再実行された |
+| 2 | 回復性 | 通知失敗後の再試行で二重決済しないか | 決済状態の遷移確認 | 実施 | 決済成功後の状態が保持されない |
+
+**互換性**
+
+| No | 副特性 | レビュー観点 | 実施内容 | 状態 | 根拠 |
+|---|---|---|---|---|---|
+| 3 | 相互運用性 | 新しい応答形式を既存クライアントが扱えるか | 応答フィールドと利用箇所の照合 | 実施 | 互換性方針は資料から確認できなかった |
 
 `Needs Your Attention` then tells the human reviewer which consumer contract to inspect, why the available sources cannot establish compatibility, what decision to make, and which contract checks AI already performed.
 
@@ -181,9 +229,8 @@ codex plugin list
 Then start a new Codex task in the repository you want to review and run:
 
 ```text
-$review-pr plan
-$review-pr plan 123
-$review-pr run  # optional: run a previously displayed plan
+$review-pr
+$review-pr 123
 ```
 
 Natural-language requests are also supported:
@@ -195,7 +242,7 @@ Plan a review of this PR: https://github.com/owner/repository/pull/123
 This plan looks good. Run the review.  # optional reply instead of the approval choice
 ```
 
-When you specify only a PR number (for example, `$review-pr plan 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To plan a PR in another repository, provide its full GitHub PR URL in a natural-language request. A general request to review a PR starts with the planning step; it does not run review agents until you approve the plan.
+When you specify only a PR number (for example, `$review-pr 123`), Review PR resolves it in the Git repository associated with the current task's working directory, using that repository's GitHub remote. To plan a PR in another repository, provide its full GitHub PR URL in a natural-language request. A general request to review a PR starts with the planning step; it does not run review agents until you approve the plan.
 
 To refresh the marketplace after updates:
 
@@ -214,9 +261,8 @@ claude --plugin-dir /path/to/review-pr/plugins/review-pr
 Then run:
 
 ```text
-/review-pr plan
-/review-pr plan 123
-/review-pr run
+/review-pr
+/review-pr 123
 ```
 
 ## 4. Requirements

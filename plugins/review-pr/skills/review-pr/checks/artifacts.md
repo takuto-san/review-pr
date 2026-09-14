@@ -31,8 +31,8 @@ receiver reads the typed payload from `parts[0].data`. No stage may infer
 missing payload fields from conversation history.
 
 The durable plan bundle and target fingerprint are defined in
-[plan-bundle.md](plan-bundle.md). `plan` creates it and stops before delegation;
-`run` loads and validates it after the user approves the presented plan. The
+[plan-bundle.md](plan-bundle.md). The plan is presented before delegation; after the user approves it, the
+orchestrator loads and validates the saved bundle before review. The
 Plan ID is internal in normal use and optional for disambiguation.
 
 ## Criterion-centric review model
@@ -52,8 +52,17 @@ Each review-plan item must preserve:
 - source URI and precise locator, including target-policy, plugin-baseline, or cited-requirement origin
 - selection reason grounded in the target change
 - primary and supporting review roles
-- expected checks and evidence when known
-- planned review strategy (`AI`, `AI + Human`, or `Human`) and the human decision to make when applicable
+
+The plan also contains review items separate from criteria. Each planned item
+has a unique `review_item_id`, references one existing `criterion_id`, and
+describes a concrete planned test, analysis, trace, or source inspection,
+including the condition to check, a source-backed target, and a verification
+method. If a precise target or method is unknown, record that gap instead of
+inventing one. A criterion may have multiple items. Do not predict a
+human handoff in the plan. After review, retain planned item IDs and record
+whether each was performed, its actual check and evidence, or why it was not
+performed. Assign a new ID to an additional check discovered during review.
+Only the result may identify a remaining human decision from observed evidence.
 
 Reviewer outputs must keep `checks` separate from `evidence`:
 
@@ -73,8 +82,10 @@ merely because both concern the same file or quality category.
 ## ID rules
 
 The orchestrator assigns IDs and passes them explicitly to reviewers. Generated
-IDs are strings containing only decimal digits, starting at `"001"`, then
-`"002"`; use at least three digits (`"999"` is followed by `"1000"`). Do not
+IDs are strings containing only decimal digits. `criterion_id` and
+`review_item_id` start at `"1"`, then `"2"`, with no leading zeros; these are
+shown to users as `No`. Other internal IDs start at `"001"`, then `"002"`,
+and use at least three digits (`"999"` is followed by `"1000"`). Do not
 encode a type, layer, or target in an ID. These IDs are local to one review run,
 not global identifiers.
 
@@ -82,10 +93,11 @@ not global identifiers.
 |---|---|---|
 | `metadata.targetId` | The PR or local change set being reviewed | Unique within the run; map it to the repository, PR when applicable, base/head SHAs, and diff in the shared target context |
 | `criterion_id` | One review-plan criterion | Unique within the target across all roles and batches |
+| `review_item_id` | One planned or added review activity | Unique within the target across all criteria and roles |
 | `metadata.batchId` | A group of at most five criteria delegated together | Unique within the target across structural and contextual roles |
 | `artifactId` | One output Artifact | Unique across all stages and targets in the run, including consolidated outputs |
 
-Each numbering scope starts at `"001"` independently. A repeated value in
+Each numbering scope starts at its specified first value independently. A repeated value in
 different fields is valid. Keep assigned IDs unchanged through review and
 verification; do not restart criterion numbering for each batch. The
 orchestrator supplies each invocation's output `artifactId`, `targetId`, and
@@ -98,6 +110,7 @@ preserved.
 ## Completion requirements
 
 - Every review-plan criterion has a stable `criterion_id` preserved through review and consolidation.
+- Every planned review item has a stable `review_item_id` and a valid `criterion_id`; completed review items retain those IDs in the result.
 - Every reviewer result uses the shared A2A-compatible Artifact envelope.
 - Every reviewer receives its required inputs explicitly.
 - Each structural and contextual result contains exactly one result per assigned criterion.

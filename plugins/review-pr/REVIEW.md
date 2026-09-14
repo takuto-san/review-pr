@@ -50,8 +50,8 @@ Use this procedure:
 5. Turn each concern into a concrete, PR-specific review criterion/question.
 6. Record why each selected quality characteristic applies, citing concrete change evidence rather than repeating its definition.
 7. Assign one primary review role (`structural` or `contextual`) and any useful supporting roles. Mechanical checks are supporting evidence, not primary review items.
-8. Preserve the selected Category, Subcategory, source criterion, concrete review criterion/question, selection reason, expected checks, and expected evidence in the review plan.
-9. Show the selected criteria as Planned Review Coverage and stop for human approval before any three-layer review delegation or repository verification command.
+8. Preserve the selected Category, Subcategory, source criterion, concrete review criterion/question, and selection reason in the review plan. List planned tests and inspections separately as review items linked to criterion IDs.
+9. Show separate review-criterion and planned-review-item tables, then stop for human approval before any three-layer review delegation or repository verification command. Determine whether human judgment remains from the actual review results, not in advance.
 10. After approval, consolidate all performed checks and evidence by the same review-plan item and show exactly one final result per review criterion. For a deferred human decision, specify why it remains, where to look, what to verify, and what AI already checked.
 
 Use the PR description, linked Issues and acceptance criteria, changed files, callers and callees, established architecture, tests, APIs, databases, events, configuration, and external-service impact.

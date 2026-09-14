@@ -25,7 +25,7 @@ Use only read-only inspection. Do not install dependencies, change configuration
 start services, or execute the project's test, build, lint, or analysis commands.
 During `plan`, inspect expected mechanical commands and prerequisites for planned
 coverage, but do not delegate an agent. Perform agent eligibility immediately
-before delegation in an approved `run`, after validating the saved target and plan.
+before delegation after plan approval, after validating the saved target and plan.
 
 If the PR identity, state, or current head SHA cannot be established, do not guess. Return `review_required` and record the uncertainty because skipping requires positive evidence.
 

@@ -1,6 +1,6 @@
 # Saved review plan contract
 
-Codex `plan` creates one durable, private JSON bundle outside the target
+Codex planning creates one durable, private JSON bundle outside the target
 repository before prompting. In Claude Code native Plan Mode, create it only
 after `ExitPlanMode` approves the complete plan; recompute and compare the
 presented fingerprint first. A rejected or revised native plan creates no
@@ -50,7 +50,7 @@ The bundle is an A2A-compatible Artifact:
 The named fields `target`, `eligibility`, `context`, `scope`, and `plan` hold
 the complete corresponding validated A2A Artifacts. Do not reconstruct a
 missing field from conversation history. Preserve the selected criterion IDs,
-source locations, expected checks, and planned human decisions. `plan_id` must
+source locations, and planned review item IDs with their criterion links. `plan_id` must
 match the file name, and every nested Artifact must share `metadata.targetId`.
 
 Build `snapshot_sha256` with SHA-256 over a deterministic, length-delimited
@@ -62,7 +62,7 @@ files or credentials in the saved bundle. Store the digest, not untracked file
 contents, in `target_fingerprint`; the complete review target Artifact may
 contain only the source data needed for downstream review.
 
-At `run`, validate the envelope, schema version, Plan ID, nested Artifacts, and
+After approval, validate the envelope, schema version, Plan ID, nested Artifacts, and
 criterion coverage. Recompute the fingerprint using the same procedure and
 compare all identity fields exactly. Recheck PR eligibility. Reject the run
 before any agent or repository command when the snapshot changed, a required
@@ -76,16 +76,17 @@ the native plan shown there; persist it before review. In Codex, a structured
 the saved plan. Rejection ends the workflow; feedback or **Request changes**
 requires a revised plan and a fresh decision.
 Silence and the original request to create a plan are not approval.
-Resolve the latest plan shown in the current task when
-its target matches the current repository; across tasks, an explicit `run`
-request may proceed only when one saved plan matches the intended repository
-and target. Ask the user to choose
-by target and creation time if several plans match. If the user asks to change
-the plan, write a new bundle with a new ID in Codex and show its Planned Review
-Coverage; in Claude Code native Plan Mode, revise before saving. An optional Plan ID can disambiguate plans. Do not mark a plan
-approved inside the bundle based on inference or elapsed time.
+Resolve the latest plan shown in the current task when its target matches
+the current repository. If several plans could match, ask which target and
+creation time the user approved. If the presented plan is unavailable in the
+current task, create and present a new plan instead of executing a saved plan
+without a fresh approval. If the user asks to change the plan, write a new
+bundle with a new ID in Codex and show its Planned Review Coverage; in Claude
+Code native Plan Mode, revise before saving. The Plan ID is an internal
+reference and never a required user input. Do not mark a plan approved inside
+the bundle based on inference or elapsed time.
 
-After a completed `run`, save a result record in the same private state
+After a completed review, save a result record in the same private state
 directory. It references the approved Plan ID and target fingerprint and
 contains consolidated criterion IDs, labels, checks, evidence locations, and
 human handoffs. A later `plan` may use this record to compare review coverage
